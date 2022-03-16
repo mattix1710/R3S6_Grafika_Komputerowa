@@ -127,12 +127,58 @@ function startGL()
   Tick();
 } 
 let angle = 45.0; //Macierz transformacji świata - określenie położenia kamery 
+var angleX = 0.0;
+var angleY = 0.0;
+var angleZ = 0.0;
+var tz = -5.0;  //Przesunięcie w osi OZ
+
 function Tick()
 {  
-    angle = angle + 0.4;
+    //angle = angle + 0.4;
 
+    let uMVMatrix = [
+    1,0,0,0, //Macierz jednostkowa
+    0,1,0,0,
+    0,0,1,0,
+    0,0,0,1
+    ];
+    
+    let uMVRotZ = [
+    +Math.cos(angleZ*Math.PI/180.0),+Math.sin(angleZ*Math.PI/180.0),0,0,
+    -Math.sin(angleZ*Math.PI/180.0),+Math.cos(angleZ*Math.PI/180.0),0,0,
+    0,0,1,0,
+    0,0,0,1
+    ];
+    
+    let uMVRotY = [
+    +Math.cos(angleY*Math.PI/180.0),0,-Math.sin(angleY*Math.PI/180.0),0,
+    0,1,0,0,
+    +Math.sin(angleY*Math.PI/180.0),0,+Math.cos(angleY*Math.PI/180.0),0,
+    0,0,0,1
+    ];
+    
+    let uMVRotX = [
+    1,0,0,0,
+    0,+Math.cos(angleX*Math.PI/180.0),+Math.sin(angleX*Math.PI/180.0),0,
+    0,-Math.sin(angleX*Math.PI/180.0),+Math.cos(angleX*Math.PI/180.0),0,
+    0,0,0,1
+    ];
+  
+    let uMVTranslateZ = [
+    1,0,0,0,
+    0,1,0,0,
+    0,0,1,0,
+    0,0,tz,1
+    ];
+
+    uMVMatrix = MatrixMul(uMVMatrix,uMVRotX);
+    uMVMatrix = MatrixMul(uMVMatrix,uMVRotY);
+    uMVMatrix = MatrixMul(uMVMatrix,uMVRotZ);
+    uMVMatrix = MatrixMul(uMVMatrix,uMVTranslateZ);
+    
     ///////////////////////////////////////////////////////////////////////////
 
+    `
     //matrix rotated around X-axis
     let uMVMatrix_X = [
     1, 0, 0, 0,
@@ -151,15 +197,15 @@ function Tick()
 
     //column
     //[row, row, row, row, ...]
-    let uMVMatrix = MatrixMul(uMVMatrix_X, uMVMatrix_Z);
-
-    //////////////////////////////////////////////////////////////////////////
+    let uMVMatrix = mulMatrix(uMVMatrix_X, uMVMatrix_Z);
+  `
+  //////////////////////////////////////////////////////////////////////////
 
   //alert(uPMatrix);
   
   //Render Scene
   gl.viewport(0, 0, gl.viewportWidth, gl.viewportHeight); 
-  gl.clearColor(1.0,0.0,0.0,1.0); //Wyczyszczenie obrazu kolorem czerwonym
+  gl.clearColor(0.02, 0.54, 0.38, 1.0); //Wyczyszczenie obrazu kolorem czerwonym
   gl.clearDepth(1.0);             //Wyczyścienie bufora głebi najdalszym planem
   gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
   gl.useProgram(shaderProgram)   //Użycie przygotowanego programu shaderowego
@@ -185,7 +231,6 @@ function Tick()
 
 /////////////////////////////////////////////////////////////////
 // ADDITIONAL FUNCTIONS
-
 
 function MatrixMul (inA, inB)
 {
@@ -240,12 +285,24 @@ function matriceMultiCol(inA, length)
   return m;
 }
 
+function handlekeydown(e)
+{
+    //if(e.keyCode == 87) angle = angle + 0.5;    //klawisz W
+    //if(e.keyCode == 83) angle = angle - 0.5;    //klawisz S
+  if(e.keyCode == 87) tz = tz + 0.1;        //W
+  if(e.keyCode == 83) tz = tz - 0.1;        //S
+
+    if(e.keyCode==68) angleY=angleY+1.0;        //A
+    if(e.keyCode==65) angleY=angleY-1.0;        //D
+    if(e.keyCode==81) angleZ=angleZ+1.0;        //Q
+    if(e.keyCode==69) angleZ=angleZ-1.0;        //E
+}
 // EOF - ADDITIONAL FUNCTIONS
 /////////////////////////////////////////////////////////////////
 
 </script>
 </head>
-<body onload="startGL()">
+<body onload="startGL()" onkeydown="handlekeydown(event)">
 <canvas id="canvas3D" width="640" height="480" style="border: solid rgb(2, 174, 253) 1px"></canvas>
 </body>
 </html>
