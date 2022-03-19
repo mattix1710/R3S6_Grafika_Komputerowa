@@ -126,7 +126,7 @@ def readFromMap(map, start, end, step, horizontal = True):
 
 mapH = ['-------- ---',
         ' --    ---- ',
-        ' -- -----   ',
+        ' --         ',
         ' - -- -     ',
         ' -          ',
         '-       - - ',
