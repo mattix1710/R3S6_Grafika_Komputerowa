@@ -138,15 +138,24 @@ function startGL()
   //Line 11
   55.0, 0.0, 55.0, 55.0, 0.0, 35.0, 55.0, 5.0, 55.0, 55.0, 5.0, 55.0, 55.0, 5.0, 35.0, 55.0, 0.0, 35.0, /*NEW WALL*/ 55.0, 0.0, 30.0, 55.0, 0.0, 5.0, 55.0, 5.0, 30.0, 55.0, 5.0, 30.0, 55.0, 5.0, 5.0, 55.0, 0.0, 5.0,
   //Line 12
-  60.0, 0.0, 60.0, 60.0, 0.0, 0.0, 60.0, 5.0, 60.0, 60.0, 5.0, 60.0, 60.0, 5.0, 0.0, 60.0, 0.0, 0.0
+  60.0, 0.0, 60.0, 60.0, 0.0, 0.0, 60.0, 5.0, 60.0, 60.0, 5.0, 60.0, 60.0, 5.0, 0.0, 60.0, 0.0, 0.0,
 
+  //==================================================================
+
+  // FLOOR
+  //finish
+  10.0, 0.0, 0.0, 15.0, 0.0, 0.0, 10.0, 0.0, -5.0, 10.0, 0.0, -5.0, 15.0, 0.0, 0.0, 15.0, 0.0, -5.0,
+  //start
+  35.0, 0.0, 65.0, 50.0, 0.0, 65.0, 35.0, 0.0, 60.0, 35.0, 0.0, 60.0, 50.0, 0.0, 65.0, 50.0, 0.0, 60.0,
+  //main floor
+  0.0, 0.0, 60.0, 60.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 60.0, 60.0, 0.0, 60.0, 60.0, 0.0, 0.0
   ]
   
   vertexPositionBuffer = gl.createBuffer(); //Stworzenie tablicy w pamieci karty graficznej
   gl.bindBuffer(gl.ARRAY_BUFFER, vertexPositionBuffer);
   gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertexPosition), gl.STATIC_DRAW);
   vertexPositionBuffer.itemSize = 3; //zdefiniowanie liczby współrzednych per wierzchołek
-  vertexPositionBuffer.numItems = 54*2; //Zdefiniowanie liczby punktów w naszym buforze
+  vertexPositionBuffer.numItems = 54*2+6; //Zdefiniowanie liczby punktów w naszym buforze
   
   //Opis sceny 3D, kolor każdego z wierzchołków
   let vertexColor = [
@@ -229,14 +238,25 @@ function startGL()
   //Line 11
   1.0, 0.83, 0.57, 1.0, 0.9, 0.75, 1.0, 0.9, 0.75, 1.0, 0.69, 0.22, 1.0, 0.83, 0.57, 1.0, 0.69, 0.22, 0.95, 0.61, 0.09, 1.0, 0.69, 0.22, 1.0, 0.69, 0.22, 1.0, 0.76, 0.41, 1.0, 0.9, 0.75, 0.95, 0.61, 0.09, 
   //Line 12
-  1.0, 0.83, 0.57, 1.0, 0.76, 0.41, 0.95, 0.61, 0.09, 0.95, 0.61, 0.09, 1.0, 0.76, 0.41, 1.0, 0.9, 0.75
+  1.0, 0.83, 0.57, 1.0, 0.76, 0.41, 0.95, 0.61, 0.09, 0.95, 0.61, 0.09, 1.0, 0.76, 0.41, 1.0, 0.9, 0.75,
+
+  //==================================================================
+
+  // FLOOR
+  //finish
+  0.22, 0.73, 0.75, 0.22, 0.73, 0.75, 0.22, 0.73, 0.75, 0.22, 0.73, 0.75, 0.22, 0.73, 0.75, 0.22, 0.73, 0.75, 
+  //start
+  0.92, 0.32, 0.32, 0.92, 0.32, 0.32, 0.92, 0.32, 0.32, 0.92, 0.32, 0.32, 0.92, 0.32, 0.32, 0.92, 0.32, 0.32,
+
+  //main floor
+  0.04, 0.15, 0.15, 0.04, 0.15, 0.15, 0.04, 0.15, 0.15, 0.04, 0.15, 0.15, 0.04, 0.15, 0.15, 0.04, 0.15, 0.15
   ]
 
  vertexColorBuffer = gl.createBuffer();
   gl.bindBuffer(gl.ARRAY_BUFFER, vertexColorBuffer);
   gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertexColor), gl.STATIC_DRAW);
   vertexColorBuffer.itemSize = 3;
-  vertexColorBuffer.numItems = 54*2;
+  vertexColorBuffer.numItems = 54*2+6;
   
   
   //Macierze opisujące położenie wirtualnej kamery w przestrzenie 3D
@@ -245,20 +265,22 @@ function startGL()
   let zFar = 100.0; //Ustalenie zakresów renderowania sceny 3D (od obiektu najbliższego zNear do najdalszego zFar)
   let zNear = 0.1;
   uPMatrix = [
+
    1.0/(aspect*Math.tan(fov/2)),0                           ,0                         ,0                            ,
    0                         ,1.0/(Math.tan(fov/2))         ,0                         ,0                            ,
    0                         ,0                           ,-(zFar+zNear)/(zFar-zNear)  , -1,
    0.75                         ,-0.5                           ,-(2*zFar*zNear)/(zFar-zNear) ,0.0,
+
   ];
   Tick();
 } 
 let angle = 0.0; //Macierz transformacji świata - określenie położenia kamery 
-var angleX = 180.0;
+var angleX = 0.0;
 var angleY = 0.0;
 var angleZ = 0.0;
-var tz = -10.0;   //Przesunięcie w osi OZ
-var ty = 3.0;     //Przesunięcie w osi OY
-var tx = -13;       //Przesunięcie w osi OX
+var tz = -64.0;   //Przesunięcie w osi OZ
+var ty = -2.0;     //Przesunięcie w osi OY
+var tx = -44;       //Przesunięcie w osi OX - początek labiryntu
 
 function Tick()
 {  
@@ -424,8 +446,9 @@ function handlekeydown(e)
   if(e.keyCode==85) ty=ty+0.1;       //UP - U
   if(e.keyCode==79) ty=ty-0.1;       //DOWN - O
 
-  if(e.keyCode==65) angleY = angleY + 1.0;        //A
-  if(e.keyCode==68) angleY = angleY - 1.0;        //D
+  //TO DO - obroty działają względem globalnej pozycji 0,0,0, a nie pozycji kamery
+  if(e.keyCode==68) angleY = angleY + 0.2;        //A       - obroty wzdłuż osi Y (dla pozycji 0,0,0)
+  if(e.keyCode==65) angleY = angleY - 0.2;        //D
 
   if(e.keyCode==87) angleX=angleX+1.0;        //W
   if(e.keyCode==83) angleX=angleX-1.0;        //S
