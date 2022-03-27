@@ -1,3 +1,5 @@
+import pyperclip
+
 #Creating cubes
 size = 5
 posX = 30                #difference from (0,0,0) position
@@ -36,12 +38,19 @@ for i in template:
     it += 1         #increment iterator
     movedCube.append(i)
 
+cubeStr = ''
 it = 1
 for i in movedCube:
-    print(i, end=", ")
+    cubeStr += str(i) + ', '
+    #print(i, end=", ")
     if(it % 9 == 0):
-        print("\n")
+        cubeStr += '\n'
+        #print("\n")
     it += 1
+    
+    
+pyperclip.copy(cubeStr)
+print(pyperclip.paste())
     
 """
 print("old:")

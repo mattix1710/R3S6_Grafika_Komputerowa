@@ -60,7 +60,7 @@ function startGL()
     uniform sampler2D uSampler;
     void main(void) {
       //gl_FragColor = vec4(vColor,1.0); //Ustalenie stałego koloru wszystkich punktów sceny
-      gl_FragColor = texture2D(uSampler,vTexUV); //Odczytanie punktu tekstury i przypisanie go jako koloru danego punktu renderowaniej figury
+      gl_FragColor = texture2D(uSampler,vTexUV)*vec4(vColor, 1.0); //Odczytanie punktu tekstury i przypisanie go jako koloru danego punktu renderowaniej figury
     }
   `;
   let fragmentShader = gl.createShader(gl.FRAGMENT_SHADER); //Stworzenie obiektu shadera 
@@ -142,6 +142,20 @@ function startGL()
 
   let vertexCoords = [
 /*
+////////////////////////
+// IMG cords:
+(0,0)             (1,0)
+  ...................
+  .                 .
+  .                 . 
+  .                 .
+  .                 .
+  .                 .
+  .                 .
+  ...................
+(0,1)             (1,1)
+
+///////////////////////
 B  E
 |  /
 | /
@@ -151,23 +165,30 @@ B  E
  / |
 /  |
 E  B
+////////////////////////
 */
 
   //Top
     0.0, 0.0,  1.0, 0.0,  1.0, 1.0, //3 punkty po 2 składowe - U1,V1, U2,V2, U3,V3 - 1 trójkąt
     0.0, 0.0,  1.0, 1.0,  0.0, 1.0,
+
+  ///////////////////////////////////////////
+  // set texture on cube all around - on the same position
+  //
   //Left
-    1.0, 0.0,  1.0, 1.0,  0.0, 0.0, //x
-    0.0, 0.0,  1.0, 1.0,  0.0, 1.0,
+    1.0, 1.0,  1.0, 0.0,  0.0, 1.0,
+    0.0, 1.0,  1.0, 0.0,  0.0, 0.0,
   //Right
-    0.0, 0.0,  1.0, 0.0,  1.0, 1.0,
-    0.0, 0.0,  1.0, 1.0,  0.0, 1.0,
+    0.0, 0.0,  0.0, 1.0,  1.0, 1.0,
+    0.0, 0.0,  1.0, 1.0,  1.0, 0.0,
   //Front - yellow
-    1.0,  1.0,  1.0, 0.0,  0.0, 1.0, //lower triangle
+    1.0, 1.0,  1.0, 0.0,  0.0, 1.0, //lower triangle
     0.0, 0.0,  0.0, 1.0,  1.0, 0.0, //upper triangle                //(0,0) - upper left; (1,0) - upper right, (0,1) - lower left
   //Back
-    0.0, 0.0,  1.0, 0.0,  1.0, 1.0,
-    0.0, 0.0,  1.0, 1.0,  0.0, 1.0,
+    0.0, 0.0,  0.0, 1.0,  1.0, 1.0,
+    0.0, 0.0,  1.0, 1.0,  1.0, 0.0,
+
+  ////////////////////////////////////////////
   //Bottom - blue
     1.0, 0.0,  1.0, 1.0,  0.0, 0.0,
     0.0, 0.0,  1.0, 1.0,  0.0, 1.0,
@@ -209,7 +230,7 @@ E  B
 var angleZ = 0.0;
 var angleY = 0.0;
 var angleX = 0.0;
-var tz = -20.0;
+var tz = -5.0;
 var changeY = 0.0;
 
 var cameraAngleRadians = 0.0;
@@ -330,8 +351,9 @@ function handlekeydown(e)
 {
  if(e.keyCode==87) angleX=angleX+1.0; //W
  if(e.keyCode==83) angleX=angleX-1.0; //S
- if(e.keyCode==68) angleY=angleY+1.0;
- if(e.keyCode==65) angleY=angleY-1.0;
+ //temp +45/-45
+ if(e.keyCode==68) angleY=angleY+45.0;  //D
+ if(e.keyCode==65) angleY=angleY-45.0;  //A
  if(e.keyCode==81) angleZ=angleZ+1.0;
  if(e.keyCode==69) angleZ=angleZ-1.0;
  
@@ -340,10 +362,12 @@ function handlekeydown(e)
  if(e.keyCode==38) radius=radius+0.01;                         //[UP]
  if(e.keyCode==40) radius=radius-0.01;                         //[DOWN]
 
- if(e.keyCode==102) mX = mX - 0.1;    //num 4
- if(e.keyCode==100) mX = mX + 0.1;    //num 6
- if(e.keyCode==98) mY = mY + 0.1;    //num 8
- if(e.keyCode==104)  mY = mY - 0.1;    //num 2
+ if(e.keyCode==102) mX = mX - 0.1;      //num 4
+ if(e.keyCode==100) mX = mX + 0.1;      //num 6
+ if(e.keyCode==98) mY = mY + 0.1;       //num 8
+ if(e.keyCode==104)  mY = mY - 0.1;     //num 2
+ if(e.keyCode==107) tz = tz + 1.0;      //num +
+ if(e.keyCode==109) tz = tz - 1.0;      //num -      
 
  //alert(e.keyCode);
  //alert(angleX);

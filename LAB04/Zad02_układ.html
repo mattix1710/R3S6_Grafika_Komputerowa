@@ -5,9 +5,6 @@
 var gl;
 var shaderProgram;
 var uPMatrix;
-
-var cameraMatrix;
-
 var vertexPositionBuffer;
 var vertexColorBuffer;
 function MatrixMul(a,b) //Mnożenie macierzy
@@ -63,7 +60,7 @@ function startGL()
     uniform sampler2D uSampler;
     void main(void) {
       //gl_FragColor = vec4(vColor,1.0); //Ustalenie stałego koloru wszystkich punktów sceny
-      gl_FragColor = texture2D(uSampler,vTexUV); //Odczytanie punktu tekstury i przypisanie go jako koloru danego punktu renderowaniej figury
+      gl_FragColor = texture2D(uSampler,vTexUV)*vec4(vColor, 1.0); //Odczytanie punktu tekstury i przypisanie go jako koloru danego punktu renderowaniej figury
     }
   `;
   let fragmentShader = gl.createShader(gl.FRAGMENT_SHADER); //Stworzenie obiektu shadera 
@@ -89,7 +86,6 @@ function startGL()
 
   //Opis sceny 3D, położenie punktów w przestrzeni 3D w formacie X,Y,Z 
   let vertexPosition = [
-
   //Top
     -1.0, +1.0, -1.0,  -1.0, +1.0, +1.0,  +1.0, +1.0, +1.0, //3 punkty po 3 składowe - X1,Y1,Z1, X2,Y2,Z2, X3,Y3,Z3 - 1 trójkąt
     -1.0, +1.0, -1.0,  +1.0, +1.0, +1.0,  +1.0, +1.0, -1.0,
@@ -101,25 +97,20 @@ function startGL()
     +1.0, +1.0, +1.0,  +1.0, -1.0, -1.0,  +1.0, +1.0, -1.0,
   //Front
     +1.0, -1.0, +1.0,  +1.0, +1.0, +1.0,  -1.0, -1.0, +1.0,
-    -1.0, +1.0, +1.0,  -1.0, -1.0, +1.0,  +1.0, +1.0, +1.0, 
+    -1.0, +1.0, +1.0,  -1.0, -1.0, +1.0,  +1.0, +1.0, +1.0,
   //Back
     +1.0, +1.0, -1.0,  +1.0, -1.0, -1.0,  -1.0, -1.0, -1.0,
     +1.0, +1.0, -1.0,  -1.0, -1.0, -1.0,  -1.0, +1.0, -1.0,
   //Bottom
     -1.0, -1.0, +1.0,  -1.0, -1.0, -1.0,  +1.0, -1.0, +1.0,
     +1.0, -1.0, +1.0,  -1.0, -1.0, -1.0,  +1.0, -1.0, -1.0
-
-
-
-
-
   ]
 
   vertexPositionBuffer = gl.createBuffer(); //Stworzenie tablicy w pamieci karty graficznej
   gl.bindBuffer(gl.ARRAY_BUFFER, vertexPositionBuffer);
   gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertexPosition), gl.STATIC_DRAW);
   vertexPositionBuffer.itemSize = 3; //zdefiniowanie liczby współrzednych per wierzchołek
-  vertexPositionBuffer.numItems = 12*21; //Zdefinoiowanie liczby punktów w naszym buforze
+  vertexPositionBuffer.numItems = 12; //Zdefinoiowanie liczby punktów w naszym buforze
 
   //Opis sceny 3D, kolor każdego z wierzchołków
   let vertexColor = [
@@ -150,23 +141,56 @@ function startGL()
   vertexColorBuffer.numItems = 12;
 
   let vertexCoords = [
+/*
+////////////////////////
+// IMG cords:
+(0,0)             (1,0)
+  ...................
+  .                 .
+  .                 . 
+  .                 .
+  .                 .
+  .                 .
+  .                 .
+  ...................
+(0,1)             (1,1)
+
+///////////////////////
+B  E
+|  /
+| /
+|/
+
+  /|
+ / |
+/  |
+E  B
+////////////////////////
+*/
+
   //Top
     0.0, 0.0,  1.0, 0.0,  1.0, 1.0, //3 punkty po 2 składowe - U1,V1, U2,V2, U3,V3 - 1 trójkąt
     0.0, 0.0,  1.0, 1.0,  0.0, 1.0,
+
+  ///////////////////////////////////////////
+  // set texture on cube all around - on the same position
+  //
   //Left
-    0.0, 0.0,  1.0, 0.0,  1.0, 1.0,
-    0.0, 0.0,  1.0, 1.0,  0.0, 1.0,
+    1.0, 1.0,  1.0, 0.0,  0.0, 1.0,
+    0.0, 1.0,  1.0, 0.0,  0.0, 0.0,
   //Right
-    0.0, 0.0,  1.0, 0.0,  1.0, 1.0,
-    0.0, 0.0,  1.0, 1.0,  0.0, 1.0,
-  //Front
-    0.0, 0.0,  1.0, 0.0,  1.0, 1.0,
-    0.0, 0.0,  1.0, 1.0,  0.0, 1.0,
+    0.0, 0.0,  0.0, 1.0,  1.0, 1.0,
+    0.0, 0.0,  1.0, 1.0,  1.0, 0.0,
+  //Front - yellow
+    1.0, 1.0,  1.0, 0.0,  0.0, 1.0, //lower triangle
+    0.0, 0.0,  0.0, 1.0,  1.0, 0.0, //upper triangle                //(0,0) - upper left; (1,0) - upper right, (0,1) - lower left
   //Back
-    0.0, 0.0,  1.0, 0.0,  1.0, 1.0,
-    0.0, 0.0,  1.0, 1.0,  0.0, 1.0,
-  //Bottom
-    0.0, 0.0,  1.0, 0.0,  1.0, 1.0,
+    0.0, 0.0,  0.0, 1.0,  1.0, 1.0,
+    0.0, 0.0,  1.0, 1.0,  1.0, 0.0,
+
+  ////////////////////////////////////////////
+  //Bottom - blue
+    1.0, 0.0,  1.0, 1.0,  0.0, 0.0,
     0.0, 0.0,  1.0, 1.0,  0.0, 1.0,
   ];
 
@@ -178,7 +202,6 @@ function startGL()
 
   textureBuffer = gl.createTexture();
   var textureImg = new Image();
-  textureImg.crossOrigin = "anonymous";
   textureImg.onload = function() { //Wykonanie kodu automatycznie po załadowaniu obrazka
     gl.bindTexture(gl.TEXTURE_2D, textureBuffer);
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, textureImg); //Faktyczne załadowanie danych obrazu do pamieci karty graficznej
@@ -186,22 +209,19 @@ function startGL()
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
   }
-  textureImg.src="Tex.png"; //Nazwa obrazka
+  textureImg.src="blob.jpg"; //Nazwa obrazka
 
   //Macierze opisujące położenie wirtualnej kamery w przestrzenie 3D
   let aspect = gl.viewportWidth/gl.viewportHeight;
   let fov = 45.0 * Math.PI / 180.0; //Określenie pola widzenia kamery
-  let zFar = 100.0; //Ustalenie zakresów renderowania sceny 3D (od obiektu najbliższego zNear do najdalszego zFar)
+  let zFar = 1000.0; //Ustalenie zakresów renderowania sceny 3D (od obiektu najbliższego zNear do najdalszego zFar)
   let zNear = 0.1;
-
-  //Projection matrix
   uPMatrix = [
    1.0/(aspect*Math.tan(fov/2)),0                           ,0                         ,0                            ,
    0                         ,1.0/(Math.tan(fov/2))         ,0                         ,0                            ,
    0                         ,0                           ,-(zFar+zNear)/(zFar-zNear)  , -1,
    0                         ,0                           ,-(2*zFar*zNear)/(zFar-zNear) ,0.0,
   ];
-
 
   Tick();
 } 
@@ -211,9 +231,12 @@ var angleZ = 0.0;
 var angleY = 0.0;
 var angleX = 0.0;
 var tz = -5.0;
+var changeY = 0.0;
 
 var cameraAngleRadians = 0.0;
 var radius = 0;
+var mX = 0.0;
+var mY = 0.0;
 
 function Tick()
 {  
@@ -258,7 +281,6 @@ function Tick()
 
   uMVMatrix = MatrixMul(uMVMatrix,uMVTranslateZ);
 
-  
   //////////////////////////////////////////////////////
   //Compute a matrix for the camera
   cameraMatrix = [
@@ -272,7 +294,7 @@ function Tick()
   1,0,0,0,
   0,1,0,0,
   0,0,1,0,
-  0,0,radius,1
+  mX,mY,radius,1
   ];
 
   //Matrix translation
@@ -284,6 +306,11 @@ function Tick()
   //Compute a view projection matrix
   uPMatrix = MatrixMul(uPMatrix, viewMatrix);
 
+
+  //RESET keys
+  mX = 0;
+  mY = 0;
+  cameraAngleRadians = 0;
 
   //alert(uPMatrix);
   
@@ -318,21 +345,29 @@ function Tick()
   
   gl.drawArrays(gl.TRIANGLES, 0, vertexPositionBuffer.numItems*vertexPositionBuffer.itemSize); //Faktyczne wywołanie rendrowania
    
-  setTimeout(Tick,100);
+  setTimeout(Tick,16);
 }
 function handlekeydown(e)
 {
  if(e.keyCode==87) angleX=angleX+1.0; //W
  if(e.keyCode==83) angleX=angleX-1.0; //S
- if(e.keyCode==68) angleY=angleY+1.0;
- if(e.keyCode==65) angleY=angleY-1.0;
+ //temp +45/-45
+ if(e.keyCode==68) angleY=angleY+45.0;  //D
+ if(e.keyCode==65) angleY=angleY-45.0;  //A
  if(e.keyCode==81) angleZ=angleZ+1.0;
  if(e.keyCode==69) angleZ=angleZ-1.0;
-
+ 
  if(e.keyCode==37) cameraAngleRadians=cameraAngleRadians+0.5; //[LEFT]
  if(e.keyCode==39) cameraAngleRadians=cameraAngleRadians-0.5; //[RIGHT]
- if(e.keyCode==38) radius=radius+0.1;                         //[UP]
- if(e.keyCode==40) radius=radius-0.1;                         //[DOWN]
+ if(e.keyCode==38) radius=radius+0.01;                         //[UP]
+ if(e.keyCode==40) radius=radius-0.01;                         //[DOWN]
+
+ if(e.keyCode==102) mX = mX - 0.1;      //num 4
+ if(e.keyCode==100) mX = mX + 0.1;      //num 6
+ if(e.keyCode==98) mY = mY + 0.1;       //num 8
+ if(e.keyCode==104)  mY = mY - 0.1;     //num 2
+ if(e.keyCode==107) tz = tz + 1.0;      //num +
+ if(e.keyCode==109) tz = tz - 1.0;      //num -      
 
  //alert(e.keyCode);
  //alert(angleX);
@@ -425,13 +460,10 @@ var m00 = m[0 * 4 + 0];
           (tmp_20 * m12 + tmp_23 * m22 + tmp_17 * m02))
   ];
 }
-
-
-
 </script>
 </head>
 <body onload="startGL()" onkeydown="handlekeydown(event)">
 <canvas id="canvas3D" width="640" height="480" style="border: solid black 1px"></canvas>
-<img id="textureImg" src="Tex.png">
+<img id="textureImg" src="blob.jpg">
 </body>
 </html>
