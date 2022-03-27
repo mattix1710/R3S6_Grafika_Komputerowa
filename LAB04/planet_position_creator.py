@@ -1,8 +1,8 @@
 import pyperclip
 
 #Creating cubes
-size = 5
-posX = 30                #difference from (0,0,0) position
+size = 10
+posX = -20                #difference from (0,0,0) position
 template = [-1.0, +1.0, -1.0,  -1.0, +1.0, +1.0,  +1.0, +1.0, +1.0, #3 punkty po 3 składowe - X1,Y1,Z1, X2,Y2,Z2, X3,Y3,Z3 - 1 trójkąt
     -1.0, +1.0, -1.0,  +1.0, +1.0, +1.0,  +1.0, +1.0, -1.0,
   #Left
