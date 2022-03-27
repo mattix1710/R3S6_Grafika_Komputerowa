@@ -1,0 +1,437 @@
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<script type="text/javascript">
+var gl;
+var shaderProgram;
+var uPMatrix;
+
+var cameraMatrix;
+
+var vertexPositionBuffer;
+var vertexColorBuffer;
+function MatrixMul(a,b) //Mnożenie macierzy
+{
+  c = [
+  0,0,0,0,
+  0,0,0,0,
+  0,0,0,0,
+  0,0,0,0
+  ]
+  for(let i=0;i<4;i++)
+  {
+    for(let j=0;j<4;j++)
+    {
+      c[i*4+j] = 0.0;
+      for(let k=0;k<4;k++)
+      {
+        c[i*4+j]+= a[i*4+k] * b[k*4+j];
+      }
+    }
+  }
+  return c;
+}
+
+function startGL() 
+{
+  alert("StartGL");
+  let canvas = document.getElementById("canvas3D"); //wyszukanie obiektu w strukturze strony 
+  gl = canvas.getContext("experimental-webgl"); //pobranie kontekstu OpenGL'u z obiektu canvas
+  gl.viewportWidth = canvas.width; //przypisanie wybranej przez nas rozdzielczości do systemu OpenGL
+  gl.viewportHeight = canvas.height;
+
+  //Kod shaderów
+  const vertextShaderSource = ` //Znak akcentu z przycisku tyldy - na lewo od przycisku 1 na klawiaturze
+    precision highp float;
+    attribute vec3 aVertexPosition; 
+    attribute vec3 aVertexColor;
+    attribute vec2 aVertexCoords;
+    uniform mat4 uMVMatrix;
+    uniform mat4 uPMatrix;
+    varying vec3 vColor;
+    varying vec2 vTexUV;
+    void main(void) {
+      gl_Position = uPMatrix * uMVMatrix * vec4(aVertexPosition, 1.0); //Dokonanie transformacji położenia punktów z przestrzeni 3D do przestrzeni obrazu (2D)
+      vColor = aVertexColor;
+      vTexUV = aVertexCoords;
+    }
+  `;
+  const fragmentShaderSource = `
+    precision highp float;
+    varying vec3 vColor;
+    varying vec2 vTexUV;
+    uniform sampler2D uSampler;
+    void main(void) {
+      //gl_FragColor = vec4(vColor,1.0); //Ustalenie stałego koloru wszystkich punktów sceny
+      gl_FragColor = texture2D(uSampler,vTexUV); //Odczytanie punktu tekstury i przypisanie go jako koloru danego punktu renderowaniej figury
+    }
+  `;
+  let fragmentShader = gl.createShader(gl.FRAGMENT_SHADER); //Stworzenie obiektu shadera 
+  let vertexShader   = gl.createShader(gl.VERTEX_SHADER);
+  gl.shaderSource(fragmentShader, fragmentShaderSource); //Podpięcie źródła kodu shader
+  gl.shaderSource(vertexShader, vertextShaderSource);
+  gl.compileShader(fragmentShader); //Kompilacja kodu shader
+  gl.compileShader(vertexShader);
+  if (!gl.getShaderParameter(fragmentShader, gl.COMPILE_STATUS)) { //Sprawdzenie ewentualnych błedów kompilacji
+    alert(gl.getShaderInfoLog(fragmentShader));
+    return null;
+  }
+  if (!gl.getShaderParameter(vertexShader, gl.COMPILE_STATUS)) {
+    alert(gl.getShaderInfoLog(vertexShader));
+    return null;
+  }
+
+  shaderProgram = gl.createProgram(); //Stworzenie obiektu programu 
+  gl.attachShader(shaderProgram, vertexShader); //Podpięcie obu shaderów do naszego programu wykonywanego na karcie graficznej
+  gl.attachShader(shaderProgram, fragmentShader);
+  gl.linkProgram(shaderProgram);
+  if (!gl.getProgramParameter(shaderProgram, gl.LINK_STATUS)) alert("Could not initialise shaders");  //Sprawdzenie ewentualnych błedów
+
+  //Opis sceny 3D, położenie punktów w przestrzeni 3D w formacie X,Y,Z 
+  let vertexPosition = [
+
+  //Top
+    -1.0, +1.0, -1.0,  -1.0, +1.0, +1.0,  +1.0, +1.0, +1.0, //3 punkty po 3 składowe - X1,Y1,Z1, X2,Y2,Z2, X3,Y3,Z3 - 1 trójkąt
+    -1.0, +1.0, -1.0,  +1.0, +1.0, +1.0,  +1.0, +1.0, -1.0,
+  //Left
+    -1.0, -1.0, +1.0,  -1.0, +1.0, +1.0,  -1.0, -1.0, -1.0,
+    -1.0, -1.0, -1.0,  -1.0, +1.0, +1.0,  -1.0, +1.0, -1.0,
+  //Right
+    +1.0, +1.0, +1.0,  +1.0, -1.0, +1.0,  +1.0, -1.0, -1.0,
+    +1.0, +1.0, +1.0,  +1.0, -1.0, -1.0,  +1.0, +1.0, -1.0,
+  //Front
+    +1.0, -1.0, +1.0,  +1.0, +1.0, +1.0,  -1.0, -1.0, +1.0,
+    -1.0, +1.0, +1.0,  -1.0, -1.0, +1.0,  +1.0, +1.0, +1.0, 
+  //Back
+    +1.0, +1.0, -1.0,  +1.0, -1.0, -1.0,  -1.0, -1.0, -1.0,
+    +1.0, +1.0, -1.0,  -1.0, -1.0, -1.0,  -1.0, +1.0, -1.0,
+  //Bottom
+    -1.0, -1.0, +1.0,  -1.0, -1.0, -1.0,  +1.0, -1.0, +1.0,
+    +1.0, -1.0, +1.0,  -1.0, -1.0, -1.0,  +1.0, -1.0, -1.0
+
+
+
+
+
+  ]
+
+  vertexPositionBuffer = gl.createBuffer(); //Stworzenie tablicy w pamieci karty graficznej
+  gl.bindBuffer(gl.ARRAY_BUFFER, vertexPositionBuffer);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertexPosition), gl.STATIC_DRAW);
+  vertexPositionBuffer.itemSize = 3; //zdefiniowanie liczby współrzednych per wierzchołek
+  vertexPositionBuffer.numItems = 12*21; //Zdefinoiowanie liczby punktów w naszym buforze
+
+  //Opis sceny 3D, kolor każdego z wierzchołków
+  let vertexColor = [
+  //Top
+    1.0, 0.0, 0.0,  1.0, 0.0, 0.0,  1.0, 0.0, 0.0, //3 punkty po 3 składowe - R1,G1,B1, R2,G2,B2, R3,G3,B3 - 1 trójkąt
+    1.0, 0.0, 0.0,  1.0, 0.0, 0.0,  1.0, 0.0, 0.0,
+  //Left
+    0.0, 1.0, 0.0,  0.0, 1.0, 0.0,  0.0, 1.0, 0.0,
+    0.0, 1.0, 0.0,  0.0, 1.0, 0.0,  0.0, 1.0, 0.0,
+  //Right
+    0.0, 0.0, 1.0,  0.0, 0.0, 1.0,  0.0, 0.0, 1.0,
+    0.0, 0.0, 1.0,  0.0, 0.0, 1.0,  0.0, 0.0, 1.0,
+  //Front
+    1.0, 1.0, 0.0,  1.0, 1.0, 0.0,  1.0, 1.0, 0.0,
+    1.0, 1.0, 0.0,  1.0, 1.0, 0.0,  1.0, 1.0, 0.0,
+  //Back
+    1.0, 0.0, 1.0,  1.0, 0.0, 1.0,  1.0, 0.0, 1.0,
+    1.0, 0.0, 1.0,  1.0, 0.0, 1.0,  1.0, 0.0, 1.0,
+  //Bottom
+    0.0, 1.0, 1.0,  0.0, 1.0, 1.0,  0.0, 1.0, 1.0,
+    0.0, 1.0, 1.0,  0.0, 1.0, 1.0,  0.0, 1.0, 1.0,
+  ]
+
+  vertexColorBuffer = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, vertexColorBuffer);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertexColor), gl.STATIC_DRAW);
+  vertexColorBuffer.itemSize = 3;
+  vertexColorBuffer.numItems = 12;
+
+  let vertexCoords = [
+  //Top
+    0.0, 0.0,  1.0, 0.0,  1.0, 1.0, //3 punkty po 2 składowe - U1,V1, U2,V2, U3,V3 - 1 trójkąt
+    0.0, 0.0,  1.0, 1.0,  0.0, 1.0,
+  //Left
+    0.0, 0.0,  1.0, 0.0,  1.0, 1.0,
+    0.0, 0.0,  1.0, 1.0,  0.0, 1.0,
+  //Right
+    0.0, 0.0,  1.0, 0.0,  1.0, 1.0,
+    0.0, 0.0,  1.0, 1.0,  0.0, 1.0,
+  //Front
+    0.0, 0.0,  1.0, 0.0,  1.0, 1.0,
+    0.0, 0.0,  1.0, 1.0,  0.0, 1.0,
+  //Back
+    0.0, 0.0,  1.0, 0.0,  1.0, 1.0,
+    0.0, 0.0,  1.0, 1.0,  0.0, 1.0,
+  //Bottom
+    0.0, 0.0,  1.0, 0.0,  1.0, 1.0,
+    0.0, 0.0,  1.0, 1.0,  0.0, 1.0,
+  ];
+
+  vertexCoordsBuffer = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, vertexCoordsBuffer);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertexCoords), gl.STATIC_DRAW);
+  vertexCoordsBuffer.itemSize = 2;
+  vertexCoordsBuffer.numItems = 12;
+
+  textureBuffer = gl.createTexture();
+  var textureImg = new Image();
+  textureImg.crossOrigin = "anonymous";
+  textureImg.onload = function() { //Wykonanie kodu automatycznie po załadowaniu obrazka
+    gl.bindTexture(gl.TEXTURE_2D, textureBuffer);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, textureImg); //Faktyczne załadowanie danych obrazu do pamieci karty graficznej
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE); //Ustawienie parametrów próbkowania tekstury
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+  }
+  textureImg.src="Tex.png"; //Nazwa obrazka
+
+  //Macierze opisujące położenie wirtualnej kamery w przestrzenie 3D
+  let aspect = gl.viewportWidth/gl.viewportHeight;
+  let fov = 45.0 * Math.PI / 180.0; //Określenie pola widzenia kamery
+  let zFar = 100.0; //Ustalenie zakresów renderowania sceny 3D (od obiektu najbliższego zNear do najdalszego zFar)
+  let zNear = 0.1;
+
+  //Projection matrix
+  uPMatrix = [
+   1.0/(aspect*Math.tan(fov/2)),0                           ,0                         ,0                            ,
+   0                         ,1.0/(Math.tan(fov/2))         ,0                         ,0                            ,
+   0                         ,0                           ,-(zFar+zNear)/(zFar-zNear)  , -1,
+   0                         ,0                           ,-(2*zFar*zNear)/(zFar-zNear) ,0.0,
+  ];
+
+
+  Tick();
+} 
+
+//let angle = 45.0; //Macierz transformacji świata - określenie położenia kamery
+var angleZ = 0.0;
+var angleY = 0.0;
+var angleX = 0.0;
+var tz = -5.0;
+
+var cameraAngleRadians = 0.0;
+var radius = 0;
+
+function Tick()
+{  
+  let uMVMatrix = [
+  1,0,0,0, //Macierz jednostkowa
+  0,1,0,0,
+  0,0,1,0,
+  0,0,0,1
+  ];
+
+  let uMVRotZ = [
+  +Math.cos(angleZ*Math.PI/180.0),+Math.sin(angleZ*Math.PI/180.0),0,0,
+  -Math.sin(angleZ*Math.PI/180.0),+Math.cos(angleZ*Math.PI/180.0),0,0,
+  0,0,1,0,
+  0,0,0,1
+  ];
+
+  let uMVRotY = [
+  +Math.cos(angleY*Math.PI/180.0),0,-Math.sin(angleY*Math.PI/180.0),0,
+  0,1,0,0,
+  +Math.sin(angleY*Math.PI/180.0),0,+Math.cos(angleY*Math.PI/180.0),0,
+  0,0,0,1
+  ];
+
+  let uMVRotX = [
+  1,0,0,0,
+  0,+Math.cos(angleX*Math.PI/180.0),+Math.sin(angleX*Math.PI/180.0),0,
+  0,-Math.sin(angleX*Math.PI/180.0),+Math.cos(angleX*Math.PI/180.0),0,
+  0,0,0,1
+  ];
+
+  let uMVTranslateZ = [
+  1,0,0,0,
+  0,1,0,0,
+  0,0,1,0,
+  0,0,tz,1
+  ];
+ 
+  uMVMatrix = MatrixMul(uMVMatrix,uMVRotX);
+  uMVMatrix = MatrixMul(uMVMatrix,uMVRotY);
+  uMVMatrix = MatrixMul(uMVMatrix,uMVRotZ);
+
+  uMVMatrix = MatrixMul(uMVMatrix,uMVTranslateZ);
+
+  
+  //////////////////////////////////////////////////////
+  //Compute a matrix for the camera
+  cameraMatrix = [
+  +Math.cos(cameraAngleRadians*Math.PI/180.0),0,-Math.sin(cameraAngleRadians*Math.PI/180.0),0,
+  0,1,0,0,
+  +Math.sin(cameraAngleRadians*Math.PI/180.0),0,+Math.cos(cameraAngleRadians*Math.PI/180.0),0,
+  0,0,0,1
+  ];
+
+  let translation = [
+  1,0,0,0,
+  0,1,0,0,
+  0,0,1,0,
+  0,0,radius,1
+  ];
+
+  //Matrix translation
+  cameraMatrix = MatrixMul(cameraMatrix, translation);
+
+  //Make a view matrix from the camera matrix
+  var viewMatrix = inverseMatrix(cameraMatrix);
+
+  //Compute a view projection matrix
+  uPMatrix = MatrixMul(uPMatrix, viewMatrix);
+
+
+  //alert(uPMatrix);
+  
+  //Render Scene
+  gl.viewport(0, 0, gl.viewportWidth, gl.viewportHeight); 
+  gl.clearColor(1.0,0.0,0.0,1.0); //Wyczyszczenie obrazu kolorem czerwonym
+  gl.clearDepth(1.0);             //Wyczyścienie bufora głebi najdalszym planem
+  gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+  gl.useProgram(shaderProgram)   //Użycie przygotowanego programu shaderowego
+  
+  gl.enable(gl.DEPTH_TEST);           // Włączenie testu głębi - obiekty bliższe mają przykrywać obiekty dalsze
+  gl.depthFunc(gl.LEQUAL);            // 
+  
+  gl.uniformMatrix4fv(gl.getUniformLocation(shaderProgram, "uPMatrix"), false, new Float32Array(uPMatrix)); //Wgranie macierzy kamery do pamięci karty graficznej
+  gl.uniformMatrix4fv(gl.getUniformLocation(shaderProgram, "uMVMatrix"), false, new Float32Array(uMVMatrix));
+  
+  gl.enableVertexAttribArray(gl.getAttribLocation(shaderProgram, "aVertexPosition"));  //Przekazanie położenia
+  gl.bindBuffer(gl.ARRAY_BUFFER, vertexPositionBuffer);
+  gl.vertexAttribPointer(gl.getAttribLocation(shaderProgram, "aVertexPosition"), vertexPositionBuffer.itemSize, gl.FLOAT, false, 0, 0);
+  
+  gl.enableVertexAttribArray(gl.getAttribLocation(shaderProgram, "aVertexColor"));  //Przekazanie kolorów
+  gl.bindBuffer(gl.ARRAY_BUFFER, vertexColorBuffer);
+  gl.vertexAttribPointer(gl.getAttribLocation(shaderProgram, "aVertexColor"), vertexColorBuffer.itemSize, gl.FLOAT, false, 0, 0);
+  
+  gl.enableVertexAttribArray(gl.getAttribLocation(shaderProgram, "aVertexCoords"));  //Pass the geometry
+  gl.bindBuffer(gl.ARRAY_BUFFER, vertexCoordsBuffer);
+  gl.vertexAttribPointer(gl.getAttribLocation(shaderProgram, "aVertexCoords"), vertexCoordsBuffer.itemSize, gl.FLOAT, false, 0, 0);
+  
+  gl.activeTexture(gl.TEXTURE0);
+  gl.bindTexture(gl.TEXTURE_2D, textureBuffer);
+  gl.uniform1i(gl.getUniformLocation(shaderProgram, "uSampler"), 0);
+  
+  gl.drawArrays(gl.TRIANGLES, 0, vertexPositionBuffer.numItems*vertexPositionBuffer.itemSize); //Faktyczne wywołanie rendrowania
+   
+  setTimeout(Tick,100);
+}
+function handlekeydown(e)
+{
+ if(e.keyCode==87) angleX=angleX+1.0; //W
+ if(e.keyCode==83) angleX=angleX-1.0; //S
+ if(e.keyCode==68) angleY=angleY+1.0;
+ if(e.keyCode==65) angleY=angleY-1.0;
+ if(e.keyCode==81) angleZ=angleZ+1.0;
+ if(e.keyCode==69) angleZ=angleZ-1.0;
+
+ if(e.keyCode==37) cameraAngleRadians=cameraAngleRadians+0.5; //[LEFT]
+ if(e.keyCode==39) cameraAngleRadians=cameraAngleRadians-0.5; //[RIGHT]
+ if(e.keyCode==38) radius=radius+0.1;                         //[UP]
+ if(e.keyCode==40) radius=radius-0.1;                         //[DOWN]
+
+ //alert(e.keyCode);
+ //alert(angleX);
+}
+
+/////////////////////////////////////////////////
+//OTHER FUNCTIONS
+
+function inverseMatrix(m){
+var m00 = m[0 * 4 + 0];
+  var m01 = m[0 * 4 + 1];
+  var m02 = m[0 * 4 + 2];
+  var m03 = m[0 * 4 + 3];
+  var m10 = m[1 * 4 + 0];
+  var m11 = m[1 * 4 + 1];
+  var m12 = m[1 * 4 + 2];
+  var m13 = m[1 * 4 + 3];
+  var m20 = m[2 * 4 + 0];
+  var m21 = m[2 * 4 + 1];
+  var m22 = m[2 * 4 + 2];
+  var m23 = m[2 * 4 + 3];
+  var m30 = m[3 * 4 + 0];
+  var m31 = m[3 * 4 + 1];
+  var m32 = m[3 * 4 + 2];
+  var m33 = m[3 * 4 + 3];
+  var tmp_0  = m22 * m33;
+  var tmp_1  = m32 * m23;
+  var tmp_2  = m12 * m33;
+  var tmp_3  = m32 * m13;
+  var tmp_4  = m12 * m23;
+  var tmp_5  = m22 * m13;
+  var tmp_6  = m02 * m33;
+  var tmp_7  = m32 * m03;
+  var tmp_8  = m02 * m23;
+  var tmp_9  = m22 * m03;
+  var tmp_10 = m02 * m13;
+  var tmp_11 = m12 * m03;
+  var tmp_12 = m20 * m31;
+  var tmp_13 = m30 * m21;
+  var tmp_14 = m10 * m31;
+  var tmp_15 = m30 * m11;
+  var tmp_16 = m10 * m21;
+  var tmp_17 = m20 * m11;
+  var tmp_18 = m00 * m31;
+  var tmp_19 = m30 * m01;
+  var tmp_20 = m00 * m21;
+  var tmp_21 = m20 * m01;
+  var tmp_22 = m00 * m11;
+  var tmp_23 = m10 * m01;
+
+  var t0 = (tmp_0 * m11 + tmp_3 * m21 + tmp_4 * m31) -
+      (tmp_1 * m11 + tmp_2 * m21 + tmp_5 * m31);
+  var t1 = (tmp_1 * m01 + tmp_6 * m21 + tmp_9 * m31) -
+      (tmp_0 * m01 + tmp_7 * m21 + tmp_8 * m31);
+  var t2 = (tmp_2 * m01 + tmp_7 * m11 + tmp_10 * m31) -
+      (tmp_3 * m01 + tmp_6 * m11 + tmp_11 * m31);
+  var t3 = (tmp_5 * m01 + tmp_8 * m11 + tmp_11 * m21) -
+      (tmp_4 * m01 + tmp_9 * m11 + tmp_10 * m21);
+
+  var d = 1.0 / (m00 * t0 + m10 * t1 + m20 * t2 + m30 * t3);
+
+  return [
+    d * t0,
+    d * t1,
+    d * t2,
+    d * t3,
+    d * ((tmp_1 * m10 + tmp_2 * m20 + tmp_5 * m30) -
+          (tmp_0 * m10 + tmp_3 * m20 + tmp_4 * m30)),
+    d * ((tmp_0 * m00 + tmp_7 * m20 + tmp_8 * m30) -
+          (tmp_1 * m00 + tmp_6 * m20 + tmp_9 * m30)),
+    d * ((tmp_3 * m00 + tmp_6 * m10 + tmp_11 * m30) -
+          (tmp_2 * m00 + tmp_7 * m10 + tmp_10 * m30)),
+    d * ((tmp_4 * m00 + tmp_9 * m10 + tmp_10 * m20) -
+          (tmp_5 * m00 + tmp_8 * m10 + tmp_11 * m20)),
+    d * ((tmp_12 * m13 + tmp_15 * m23 + tmp_16 * m33) -
+          (tmp_13 * m13 + tmp_14 * m23 + tmp_17 * m33)),
+    d * ((tmp_13 * m03 + tmp_18 * m23 + tmp_21 * m33) -
+          (tmp_12 * m03 + tmp_19 * m23 + tmp_20 * m33)),
+    d * ((tmp_14 * m03 + tmp_19 * m13 + tmp_22 * m33) -
+          (tmp_15 * m03 + tmp_18 * m13 + tmp_23 * m33)),
+    d * ((tmp_17 * m03 + tmp_20 * m13 + tmp_23 * m23) -
+          (tmp_16 * m03 + tmp_21 * m13 + tmp_22 * m23)),
+    d * ((tmp_14 * m22 + tmp_17 * m32 + tmp_13 * m12) -
+          (tmp_16 * m32 + tmp_12 * m12 + tmp_15 * m22)),
+    d * ((tmp_20 * m32 + tmp_12 * m02 + tmp_19 * m22) -
+          (tmp_18 * m22 + tmp_21 * m32 + tmp_13 * m02)),
+    d * ((tmp_18 * m12 + tmp_23 * m32 + tmp_15 * m02) -
+          (tmp_22 * m32 + tmp_14 * m02 + tmp_19 * m12)),
+    d * ((tmp_22 * m22 + tmp_16 * m02 + tmp_21 * m12) -
+          (tmp_20 * m12 + tmp_23 * m22 + tmp_17 * m02))
+  ];
+}
+
+
+
+</script>
+</head>
+<body onload="startGL()" onkeydown="handlekeydown(event)">
+<canvas id="canvas3D" width="640" height="480" style="border: solid black 1px"></canvas>
+<img id="textureImg" src="Tex.png">
+</body>
+</html>
