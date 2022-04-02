@@ -7,8 +7,6 @@ var shaderProgram;
 var uPMatrix;
 var vertexPositionBuffer;
 var vertexColorBuffer;
-var numOfCubes = 2;
-
 function MatrixMul(a,b) //Mnożenie macierzy
 {
   c = [
@@ -30,6 +28,46 @@ function MatrixMul(a,b) //Mnożenie macierzy
   }
   return c;
 }
+
+////////////////////////////////////////////////////////
+// CREATE functions
+
+function createRect(mx, my, mz, dax, day, daz, dbx, dby, dbz)
+{
+  p1x = mx;             p1y = my;             p1z = mz;
+  p2x = mx + dax;       p2y = my + day;       p2z = mz + daz;
+  p3x = mx + dbx;       p3y = my + dby;       p3z = mz + dbz;
+  p4x = mx + dax + dbx; p4y = my + day + dby; p4z = mz + daz + dbz;
+  
+  let vertexPosition = [p1x,p1y,p1z, p2x,p2y,p2z, p4x,p4y,p4z,  //Pierwszy trójkąt
+                        p1x,p1y,p1z, p4x,p4y,p4z, p3x,p3y,p3z]; //Drugi trójkąt
+                        
+  return vertexPosition;
+}
+
+function createRectCoords(mu, mv, dau, dav, dbu, dbv)
+{
+  p1u = mu;             p1v = mv;            
+  p2u = mu + dau;       p2v = mv + dav;      
+  p3u = mu + dbu;       p3v = mv + dbv;      
+  p4u = mu + dau + dbu; p4v = mv + dav + dbv;
+  
+  let vertexCoord = [p1u,p1v, p2u,p2v, p4u,p4v,  //Pierwszy trójkąt
+                     p1u,p1v, p4u,p4v, p3u,p3v]; //Drugi trójkąt
+                        
+  return vertexCoord;
+}
+
+function createRectColor(r,g,b)
+{
+  let vertexColor = [r,g,b, r,g,b, r,g,b,  //Pierwszy trójkąt
+                     r,g,b, r,g,b, r,g,b]; //Drugi trójkąt
+                        
+  return vertexColor;
+}
+
+//
+///////////////////////////////////////////////////////
 
 function startGL() 
 {
@@ -87,68 +125,35 @@ function startGL()
   if (!gl.getProgramParameter(shaderProgram, gl.LINK_STATUS)) alert("Could not initialise shaders");  //Sprawdzenie ewentualnych błedów
 
   //Opis sceny 3D, położenie punktów w przestrzeni 3D w formacie X,Y,Z 
-  let vertexPosition = [
-  /*
-  //Top
-    -1.0, +1.0, -1.0,  -1.0, +1.0, +1.0,  +1.0, +1.0, +1.0, //3 punkty po 3 składowe - X1,Y1,Z1, X2,Y2,Z2, X3,Y3,Z3 - 1 trójkąt
-    -1.0, +1.0, -1.0,  +1.0, +1.0, +1.0,  +1.0, +1.0, -1.0,
-  //Left
-    -1.0, -1.0, +1.0,  -1.0, +1.0, +1.0,  -1.0, -1.0, -1.0,
-    -1.0, -1.0, -1.0,  -1.0, +1.0, +1.0,  -1.0, +1.0, -1.0,
-  //Right
-    +1.0, +1.0, +1.0,  +1.0, -1.0, +1.0,  +1.0, -1.0, -1.0,
-    +1.0, +1.0, +1.0,  +1.0, -1.0, -1.0,  +1.0, +1.0, -1.0,
-  //Front
-    +1.0, -1.0, +1.0,  +1.0, +1.0, +1.0,  -1.0, -1.0, +1.0,
-    -1.0, +1.0, +1.0,  -1.0, -1.0, +1.0,  +1.0, +1.0, +1.0,
-  //Back
-    +1.0, +1.0, -1.0,  +1.0, -1.0, -1.0,  -1.0, -1.0, -1.0,
-    +1.0, +1.0, -1.0,  -1.0, -1.0, -1.0,  -1.0, +1.0, -1.0,
-  //Bottom
-    -1.0, -1.0, +1.0,  -1.0, -1.0, -1.0,  +1.0, -1.0, +1.0,
-    +1.0, -1.0, +1.0,  -1.0, -1.0, -1.0,  +1.0, -1.0, -1.0
-    */
-
-
-    //TEST
-    -5.0, 5.0, -5.0, -5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 
-    -5.0, 5.0, -5.0, 5.0, 5.0, 5.0, 5.0, 5.0, -5.0, 
-    -5.0, -5.0, 5.0, -5.0, 5.0, 5.0, -5.0, -5.0, -5.0, 
-    -5.0, -5.0, -5.0, -5.0, 5.0, 5.0, -5.0, 5.0, -5.0, 
-    5.0, 5.0, 5.0, 5.0, -5.0, 5.0, 5.0, -5.0, -5.0, 
-    5.0, 5.0, 5.0, 5.0, -5.0, -5.0, 5.0, 5.0, -5.0, 
-    5.0, -5.0, 5.0, 5.0, 5.0, 5.0, -5.0, -5.0, 5.0, 
-    -5.0, 5.0, 5.0, -5.0, -5.0, 5.0, 5.0, 5.0, 5.0, 
-    5.0, 5.0, -5.0, 5.0, -5.0, -5.0, -5.0, -5.0, -5.0, 
-    5.0, 5.0, -5.0, -5.0, -5.0, -5.0, -5.0, 5.0, -5.0, 
-    -5.0, -5.0, 5.0, -5.0, -5.0, -5.0, 5.0, -5.0, 5.0, 
-    5.0, -5.0, 5.0, -5.0, -5.0, -5.0, 5.0, -5.0, -5.0,
-
-  //LEFT
-    -30.0, 10.0, -10.0, -30.0, 10.0, 10.0, -10.0, 10.0, 10.0, 
-    -30.0, 10.0, -10.0, -10.0, 10.0, 10.0, -10.0, 10.0, -10.0, 
-    -30.0, -10.0, 10.0, -30.0, 10.0, 10.0, -30.0, -10.0, -10.0, 
-    -30.0, -10.0, -10.0, -30.0, 10.0, 10.0, -30.0, 10.0, -10.0, 
-    -10.0, 10.0, 10.0, -10.0, -10.0, 10.0, -10.0, -10.0, -10.0, 
-    -10.0, 10.0, 10.0, -10.0, -10.0, -10.0, -10.0, 10.0, -10.0, 
-    -10.0, -10.0, 10.0, -10.0, 10.0, 10.0, -30.0, -10.0, 10.0, 
-    -30.0, 10.0, 10.0, -30.0, -10.0, 10.0, -10.0, 10.0, 10.0, 
-    -10.0, 10.0, -10.0, -10.0, -10.0, -10.0, -30.0, -10.0, -10.0, 
-    -10.0, 10.0, -10.0, -30.0, -10.0, -10.0, -30.0, 10.0, -10.0, 
-    -30.0, -10.0, 10.0, -30.0, -10.0, -10.0, -10.0, -10.0, 10.0, 
-    -10.0, -10.0, 10.0, -30.0, -10.0, -10.0, -10.0, -10.0, -10.0
-
-
-
-  ]
+  let vertexPosition = []; //3 punkty po 3 składowe - X1,Y1,Z1, X2,Y2,Z2, X3,Y3,Z3 - 1 trójkąt
+  
+  //utwórz ściany
+  vertexPosition.push(...createRect(-1,-1,-1, 2,0,0, 0,2,0)); // Ściana XY
+  vertexPosition.push(...createRect(-1,-1,-1, 2,0,0, 0,0,2)); // Ściana XZ
+  vertexPosition.push(...createRect(-1,-1,-1, 0,2,0, 0,0,2)); // Ściana YZ
+  
+  vertexPosition.push(...createRect(1,1,1, -2,0,0, 0,-2,0)); // Ściana XY
+  vertexPosition.push(...createRect(1,1,1, -2,0,0, 0,0,-2)); // Ściana XZ
+  vertexPosition.push(...createRect(1,1,1, 0,-2,0, 0,0,-2)); // Ściana YZ
 
   vertexPositionBuffer = gl.createBuffer(); //Stworzenie tablicy w pamieci karty graficznej
   gl.bindBuffer(gl.ARRAY_BUFFER, vertexPositionBuffer);
   gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertexPosition), gl.STATIC_DRAW);
   vertexPositionBuffer.itemSize = 3; //zdefiniowanie liczby współrzednych per wierzchołek
-  vertexPositionBuffer.numItems = 12*numOfCubes; //Zdefinoiowanie liczby punktów w naszym buforze
+  vertexPositionBuffer.numItems = vertexPosition.length/9; //Zdefinoiowanie liczby trójkątów w naszym buforze
 
   //Opis sceny 3D, kolor każdego z wierzchołków
+  let vertexColor = []; //3 punkty po 3 składowe - R1,G1,B1, R2,G2,B2, R3,G3,B3 - 1 trójkąt
+  
+  vertexColor.push(...createRectColor(1.0,1.0,1.0));
+  vertexColor.push(...createRectColor(1.0,0.0,1.0));
+  vertexColor.push(...createRectColor(1.0,1.0,1.0));
+  
+  vertexColor.push(...createRectColor(1.0,1.0,1.0));
+  vertexColor.push(...createRectColor(1.0,1.0,1.0));
+  vertexColor.push(...createRectColor(1.0,1.0,1.0));
+
+  /*
   let vertexColor = [
   //Top
     1.0, 0.0, 0.0,  1.0, 0.0, 0.0,  1.0, 0.0, 0.0, //3 punkty po 3 składowe - R1,G1,B1, R2,G2,B2, R3,G3,B3 - 1 trójkąt
@@ -167,49 +172,25 @@ function startGL()
     1.0, 0.0, 1.0,  1.0, 0.0, 1.0,  1.0, 0.0, 1.0,
   //Bottom
     0.0, 1.0, 1.0,  0.0, 1.0, 1.0,  0.0, 1.0, 1.0,
-    0.0, 1.0, 1.0,  0.0, 1.0, 1.0,  0.0, 1.0, 1.0
-
-
-///////////////////////////////////////////////////////
-// colors of second cube
-/*
-  //Top
-  1.0, 0.0, 0.0,  1.0, 0.0, 0.0,  1.0, 0.0, 0.0, //3 punkty po 3 składowe - R1,G1,B1, R2,G2,B2, R3,G3,B3 - 1 trójkąt
-  1.0, 0.0, 0.0,  1.0, 0.0, 0.0,  1.0, 0.0, 0.0,
-//Left
-  0.0, 1.0, 0.0,  0.0, 1.0, 0.0,  0.0, 1.0, 0.0,
-  0.0, 1.0, 0.0,  0.0, 1.0, 0.0,  0.0, 1.0, 0.0,
-//Right
-  0.0, 0.0, 1.0,  0.0, 0.0, 1.0,  0.0, 0.0, 1.0,
-  0.0, 0.0, 1.0,  0.0, 0.0, 1.0,  0.0, 0.0, 1.0,
-//Front
-  1.0, 1.0, 0.0,  1.0, 1.0, 0.0,  1.0, 1.0, 0.0,
-  1.0, 1.0, 0.0,  1.0, 1.0, 0.0,  1.0, 1.0, 0.0,
-//Back
-  1.0, 0.0, 1.0,  1.0, 0.0, 1.0,  1.0, 0.0, 1.0,
-  1.0, 0.0, 1.0,  1.0, 0.0, 1.0,  1.0, 0.0, 1.0,
-//Bottom
-  0.0, 1.0, 1.0,  0.0, 1.0, 1.0,  0.0, 1.0, 1.0,
-  0.0, 1.0, 1.0,  0.0, 1.0, 1.0,  0.0, 1.0, 1.0,
-  */
+    0.0, 1.0, 1.0,  0.0, 1.0, 1.0,  0.0, 1.0, 1.0,
   ]
-
-  for(let j = 0; j < numOfCubes-1; j++)
-  {
-    for(let i = 0; i < 108; i++)
-    {
-      vertexColor.push(vertexColor[i]);
-    }
-  }
-
+  */
 
   vertexColorBuffer = gl.createBuffer();
   gl.bindBuffer(gl.ARRAY_BUFFER, vertexColorBuffer);
   gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertexColor), gl.STATIC_DRAW);
   vertexColorBuffer.itemSize = 3;
-  vertexColorBuffer.numItems = 12*numOfCubes;
+  vertexColorBuffer.numItems = 12;
 
-  let vertexCoords = [
+  let vertexCoords = []; //3 punkty po 2 składowe - U1,V1, U2,V2, U3,V3 - 1 trójkąt
+ 
+  vertexCoords.push(...createRectCoords(0,0,1,0,0,1));
+  vertexCoords.push(...createRectCoords(0,0,1,0,0,1));
+  vertexCoords.push(...createRectCoords(0,0,1,0,0,1));
+  
+  vertexCoords.push(...createRectCoords(0,0,1,0,0,1));
+  vertexCoords.push(...createRectCoords(0,0,1,0,0,1));
+  vertexCoords.push(...createRectCoords(0,0,1,0,0,1));
 /*
 ////////////////////////
 // IMG cords:
@@ -237,55 +218,11 @@ E  B
 ////////////////////////
 */
 
-  //Top
-    0.0, 0.0,  1.0, 0.0,  1.0, 1.0, //3 punkty po 2 składowe - U1,V1, U2,V2, U3,V3 - 1 trójkąt
-    0.0, 0.0,  1.0, 1.0,  0.0, 1.0,
-
-  ///////////////////////////////////////////
-  // set texture on cube all around - on the same position
-  //
-  //Left
-    1.0, 1.0,  1.0, 0.0,  0.0, 1.0,
-    0.0, 1.0,  1.0, 0.0,  0.0, 0.0,
-  //Right
-    0.0, 0.0,  0.0, 1.0,  1.0, 1.0,
-    0.0, 0.0,  1.0, 1.0,  1.0, 0.0,
-  //Front - yellow
-    1.0, 1.0,  1.0, 0.0,  0.0, 1.0, //lower triangle
-    0.0, 0.0,  0.0, 1.0,  1.0, 0.0, //upper triangle                //(0,0) - upper left; (1,0) - upper right, (0,1) - lower left
-  //Back
-    0.0, 0.0,  0.0, 1.0,  1.0, 1.0,
-    0.0, 0.0,  1.0, 1.0,  1.0, 0.0,
-
-  ////////////////////////////////////////////
-  //Bottom - blue
-    1.0, 0.0,  1.0, 1.0,  0.0, 0.0,
-    0.0, 0.0,  1.0, 1.0,  0.0, 1.0,
-
-
-  ////////////////////////////////////////////
-  // SECOND CUBE:
-    0.0, 0.0,  1.0, 0.0,  1.0, 0.0,
-    0.0, 0.0,  1.0, 0.0,  1.0, 0.0,
-    0.0, 0.0,  1.0, 0.0,  1.0, 0.0,
-    0.0, 0.0,  1.0, 0.0,  1.0, 0.0,
-    0.0, 0.0,  1.0, 0.0,  1.0, 0.0,
-    0.0, 0.0,  1.0, 0.0,  1.0, 0.0,
-
-    0.0, 0.0,  1.0, 0.0,  1.0, 0.0,
-    0.0, 0.0,  1.0, 0.0,  1.0, 0.0,
-
-    0.0, 0.0,  1.0, 0.0,  1.0, 0.0,
-    0.0, 0.0,  1.0, 0.0,  1.0, 0.0,
-    0.0, 0.0,  1.0, 0.0,  1.0, 0.0,
-    0.0, 0.0,  1.0, 0.0,  1.0, 0.0,
-  ];
-
   vertexCoordsBuffer = gl.createBuffer();
   gl.bindBuffer(gl.ARRAY_BUFFER, vertexCoordsBuffer);
   gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertexCoords), gl.STATIC_DRAW);
   vertexCoordsBuffer.itemSize = 2;
-  vertexCoordsBuffer.numItems = 12*numOfCubes;
+  vertexCoordsBuffer.numItems = vertexCoords.length/6;
 
   textureBuffer = gl.createTexture();
   var textureImg = new Image();
@@ -296,7 +233,7 @@ E  B
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
   }
-  textureImg.src="blob.jpg"; //Nazwa obrazka
+  textureImg.src="Tex.png"; //Nazwa obrazka
 
   //Macierze opisujące położenie wirtualnej kamery w przestrzenie 3D
   let aspect = gl.viewportWidth/gl.viewportHeight;
@@ -317,9 +254,7 @@ E  B
 var angleZ = 0.0;
 var angleY = 0.0;
 var angleX = 0.0;
-var tz = -200.0;
-var tx = 0;
-var ty = 0;
+var tz = -5.0;
 var changeY = 0.0;
 
 var cameraAngleRadians = 0.0;
@@ -361,7 +296,7 @@ function Tick()
   1,0,0,0,
   0,1,0,0,
   0,0,1,0,
-  tx,ty,tz,1
+  0,0,tz,1
   ];
  
   uMVMatrix = MatrixMul(uMVMatrix,uMVRotX);
@@ -390,8 +325,7 @@ function Tick()
   cameraMatrix = MatrixMul(cameraMatrix, translation);
 
   //Make a view matrix from the camera matrix
-  //var viewMatrix = inverseMatrix(cameraMatrix);
-  var viewMatrix = cameraMatrix;
+  var viewMatrix = inverseMatrix(cameraMatrix);
 
   //Compute a view projection matrix
   uPMatrix = MatrixMul(uPMatrix, viewMatrix);
@@ -441,9 +375,9 @@ function handlekeydown(e)
 {
  if(e.keyCode==87) angleX=angleX+1.0; //W
  if(e.keyCode==83) angleX=angleX-1.0; //S
- //temp +45/-45
- if(e.keyCode==68) angleY=angleY+45.0;  //D
- if(e.keyCode==65) angleY=angleY-45.0;  //A
+
+ if(e.keyCode==68) angleY=angleY+1.0;  //D
+ if(e.keyCode==65) angleY=angleY-1.0;  //A
  if(e.keyCode==81) angleZ=angleZ+1.0;
  if(e.keyCode==69) angleZ=angleZ-1.0;
  
@@ -458,9 +392,6 @@ function handlekeydown(e)
  if(e.keyCode==104)  mY = mY - 0.1;     //num 2
  if(e.keyCode==107) tz = tz + 1.0;      //num +
  if(e.keyCode==109) tz = tz - 1.0;      //num -      
-
- if(e.keyCode==219) tx = tx - 1.0;      //[  
- if(e.keyCode==221) tx = tx + 1.0;      //] 
 
  //alert(e.keyCode);
  //alert(angleX);
@@ -557,6 +488,6 @@ var m00 = m[0 * 4 + 0];
 </head>
 <body onload="startGL()" onkeydown="handlekeydown(event)">
 <canvas id="canvas3D" width="640" height="480" style="border: solid black 1px"></canvas>
-<img id="textureImg" src="blob.jpg">
+<img id="textureImg" src="Tex.png">
 </body>
 </html>
