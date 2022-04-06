@@ -136,7 +136,7 @@ function startGL()
   let moved = 0.0;
   let torusRadius = radius*3;
   let torusY = 45.0;
-  let stepTorus = 360/120;
+  let stepTorus = 360/360;
 
   for(let torusAngle = 0; torusAngle < 360; torusAngle += stepTorus)
   {
@@ -186,7 +186,7 @@ function startGL()
   
 
   // TEMP - stripes
-  let numTransitions = 20;
+  let numTransitions = 8;
   let smallDegree = 360/numTransitions;
   let bigDegree = (360*2)/numTransitions;
   //for(let elevation=-90; elevation< 90; elevation+= stepElevation)
