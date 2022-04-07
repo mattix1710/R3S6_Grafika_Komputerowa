@@ -164,8 +164,8 @@ function startGL()
   //Opis sceny 3D, położenie punktów w przestrzeni 3D w formacie X,Y,Z 
   let vertexPosition = []; //3 punkty po 3 składowe - X1,Y1,Z1, X2,Y2,Z2, X3,Y3,Z3 - 1 trójkąt
   
-  let stepElevation = 90/6;
-  let stepAngle = 360/12;
+  let stepElevation = 90/90;
+  let stepAngle = 360/360;
   let radius = 2.0;
   let numOfBalls = 5;
 
@@ -184,7 +184,7 @@ function startGL()
   let movedZ = radius*0.75;
 
   for(let it = 0; it < numOfBalls; it++){
-  for(let elevation=-90; elevation< 90; elevation+= stepElevation)
+  for(let elevation=90; elevation> -90; elevation-= stepElevation)
   {
     let radiusXZ = radius*Math.cos(elevation*Math.PI/180);
     let radiusY  = radius*Math.sin(elevation*Math.PI/180);
@@ -256,13 +256,16 @@ function startGL()
   vertexColorBuffer.numItems = vertexColor.length/9;
   
   let vertexCoords = []; //3 punkty po 2 składowe - U1,V1, U2,V2, U3,V3 - 1 trójkąt
-  
+
   for(let it = 0; it < numOfBalls; it++){
+    let posTex = (it+1.0)/numOfBalls;
+
     for(let elevation=-90; elevation< 90; elevation+= stepElevation)
     {
       for(let angle = 0; angle < 360; angle+= stepAngle)
       {
-        vertexCoords.push(...createRectCoords(0,0,1,0,0,1));
+        //vertexCoords.push(...createRectCoords(0,0,1,0,0,1));
+        vertexCoords.push(...createRectCoords((angle+360*it)/(360*numOfBalls), ((elevation+90)/180), (1.0/360), 0, 0, 1.0/180));
         //vertexCoords.push(...createRectCoords(x/mapSizeX,y/mapSizeY,1.0/mapSizeX,0,0,1.0/mapSizeY));
       }
     }
@@ -275,9 +278,11 @@ function startGL()
   vertexCoordsBuffer.numItems = vertexCoords.length/6;
   
   let vertexNormal = [];
+
+  radius = 2.0;
   
   for(let it = 0; it < numOfBalls; it++){
-    for(let elevation=-90; elevation< 90; elevation+= stepElevation)
+    for(let elevation=90; elevation> -90; elevation-= stepElevation)
     {
       let radiusXZ = radius*Math.cos(elevation*Math.PI/180);
       let radiusY  = radius*Math.sin(elevation*Math.PI/180);
@@ -304,11 +309,17 @@ function startGL()
         let py4 = radiusY2;
         let pz4 = radiusXZ2*Math.sin((angle+stepAngle)*Math.PI/180);
 
-        if(it != 0){
-        px1 += movedX;
-        px2 += movedX;
-        px3 += movedX;
-        px4 += movedX;
+        if(it > 0){
+          px1 += movedX*it;
+          px2 += movedX*it;
+          px3 += movedX*it;
+          px4 += movedX*it;
+        }
+        if(it % 2 == 1){
+          pz1 += movedZ;
+          pz2 += movedZ;
+          pz3 += movedZ;
+          pz4 += movedZ;
         }
         
         let p1 = Math.sqrt(px1*px1+py1*py1+pz1*pz1)
@@ -335,6 +346,7 @@ function startGL()
         vertexNormal.push(...createRect2(px1,py1,pz1,px2,py2,pz2,px3,py3,pz3,px4,py4,pz4));
       } 
     } 
+    radius = radius*0.9;
   }
   
   vertexNormalBuffer = gl.createBuffer();
@@ -354,7 +366,7 @@ function startGL()
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
   }
-  textureImg.src="Tex.png"; //Nazwa obrazka
+  textureImg.src="res.jpg"; //Nazwa obrazka
   
   //Macierze opisujące położenie wirtualnej kamery w przestrzenie 3D
   let aspect = gl.viewportWidth/gl.viewportHeight;
@@ -374,7 +386,9 @@ function startGL()
 var angleZ = 0.0;
 var angleY = 0.0;
 var angleX = 0.0;
-var tz = -8.0;
+var tz = -20.0;
+var tx = 0;
+var ty = 0;
 
 var lightX = 10;
 var lightY = 0;
@@ -414,7 +428,7 @@ function Tick()
   1,0,0,0,
   0,1,0,0,
   0,0,1,0,
-  0,0,tz,1
+  tx,ty,tz,1
   ];
 
   uMVMatrix = MatrixMul(uMVMatrix,uMVRotX);
@@ -460,7 +474,7 @@ function Tick()
   
   gl.drawArrays(gl.TRIANGLES, 0, vertexPositionBuffer.numItems*vertexPositionBuffer.itemSize); //Faktyczne wywołanie rendrowania
    
-  setTimeout(Tick,100);
+  setTimeout(Tick,16);
 }
 function handlekeydown(e)
 {
@@ -475,20 +489,38 @@ function handlekeydown(e)
  //alert(angleX);
  
  //U I O J K L
- if(e.keyCode==76) lightX=lightX+0.1;
- if(e.keyCode==74) lightX=lightX-0.1;
- if(e.keyCode==73) lightY=lightY+0.1;
- if(e.keyCode==75) lightY=lightY-0.1;
- if(e.keyCode==85) lightZ=lightZ+0.1;
- if(e.keyCode==79) lightZ=lightZ-0.1;
+ if(e.keyCode==76) lightX=lightX+0.5;
+ if(e.keyCode==74) lightX=lightX-0.5;
+ if(e.keyCode==73) lightY=lightY+0.5;
+ if(e.keyCode==75) lightY=lightY-0.5;
+ if(e.keyCode==85) lightZ=lightZ+0.5;
+ if(e.keyCode==79) lightZ=lightZ-0.5;
 
  if(e.keyCode==107) tz += 0.1;        //NUMPAD +
  if(e.keyCode==109) tz -= 0.1;        //NUMPAD -
+ if(e.keyCode==100) tx -= 0.1;        //NUMPAD 4
+ if(e.keyCode==102) tx += 0.1;        //NUMPAD 6
+ if(e.keyCode==104) ty += 0.1;        //NUMPAD 8
+ if(e.keyCode==98)  ty -= 0.1;        //NUMPAD 2
 }
 </script>
 </head>
 <body onload="startGL()" onkeydown="handlekeydown(event)">
 <canvas id="canvas3D" width="640" height="480" style="border: solid black 1px"></canvas>
-<img id="textureImg" src="Tex.png">
+<p><font color="red">----- LIGHT -----</font></p>
+<p>+X: <b><font color="blue">L</font></b></p>
+<p>-X: <b><font color="blue">J</font></b></p>
+<p>+Y: <b><font color="blue">I</font></b></p>
+<p>-Y: <b><font color="blue">K</font></b></p>
+<p>+Z: <b><font color="blue">U</font></b></p>
+<p>-Z: <b><font color="blue">O</font></b></p>
+<p>--------------------</p>
+<p>UP: <b><font color="blue">NUMPAD 8</font></b></p>
+<p>DOWN: <b><font color="blue">NUMPAD 2</font></b></p>
+<p>LEFT: <b><font color="blue">NUMPAD 4</font></b></p>
+<p>RIGHT: <b><font color="blue">NUMPAD 6</font></b></p>
+<p>CLOSE: <b><font color="blue">NUMPAD +</font></b></p>
+<p>AWAY: <b><font color="blue">NUMPAD -</font></b></p>
+<img id="textureImg" src="res.jpg">
 </body>
 </html>
