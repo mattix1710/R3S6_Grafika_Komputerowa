@@ -10,7 +10,7 @@ var vertexColorBuffer;
 var vertexCoordsBuffer;
 var vertexNormalBuffer;
 
-function CreateShpere(x,y,z,radius, numStepsElevation, numStepsAngle)
+function CreateSphere(x,y,z,radius, numStepsElevation, numStepsAngle)
 {
   //Opis sceny 3D, położenie punktów w przestrzeni 3D w formacie X,Y,Z 
   let vertexPosition = []; //3 punkty po 3 składowe - X1,Y1,Z1, X2,Y2,Z2, X3,Y3,Z3 - 1 trójkąt
@@ -238,7 +238,7 @@ function startGL()
   let vertexCoords; //3 punkty po 2 składowe - U1,V1, U2,V2, U3,V3 - 1 trójkąt
   let vertexNormal;
   
-  [vertexPosition, vertexColor, vertexCoords, vertexNormal] = CreateShpere(0,0,0,2, 6, 12); 
+  [vertexPosition, vertexColor, vertexCoords, vertexNormal] = CreateSphere(0,0,0,2, 6, 12); 
 
   //Opis sceny 3D, położenie punktów w przestrzeni 3D w formacie X,Y,Z 
   vertexPositionBuffer = gl.createBuffer(); //Stworzenie tablicy w pamieci karty graficznej
