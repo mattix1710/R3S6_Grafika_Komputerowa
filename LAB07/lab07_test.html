@@ -10,6 +10,8 @@ var vertexColorBuffer;
 var vertexCoordsBuffer;
 var vertexNormalBuffer;
 
+const NUM_PLANETS = 16;
+
 function CreateSphere(x,y,z,radius, numStepsElevation, numStepsAngle)
 {
   //Opis sceny 3D, położenie punktów w przestrzeni 3D w formacie X,Y,Z 
@@ -238,6 +240,7 @@ function startGL()
   let vertexCoords; //3 punkty po 2 składowe - U1,V1, U2,V2, U3,V3 - 1 trójkąt
   let vertexNormal;
   
+  //create one planet
   [vertexPosition, vertexColor, vertexCoords, vertexNormal] = CreateSphere(0,0,0,2, 6, 12); 
 
   //Opis sceny 3D, położenie punktów w przestrzeni 3D w formacie X,Y,Z 
@@ -268,7 +271,9 @@ function startGL()
   vertexNormalBuffer.itemSize = 3;
   vertexNormalBuffer.numItems = vertexNormal.length/9;
   
+  ////////////////////////////////////
   
+  /*
   textureBuffer = gl.createTexture();
   var textureImg = new Image();
   textureImg.onload = function() { //Wykonanie kodu automatycznie po załadowaniu obrazka
@@ -292,13 +297,40 @@ function startGL()
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
   }
   textureImg2.src="./src/mars.jpg"; //Nazwa obrazka
+  */
+
+  /////////////////////////////////////////////////////
+  // TEMP - ALTERNATIVE REPRESENTATION
+  //
+  // all planets presented in array
+  //
+
+  textureBuffer = new Array(NUM_PLANETS);     // create empty array of texture buffers
+  var textureImg = new Array(NUM_PLANETS);        // create empty array of texture imgs
+
+  for(let it = 0; it < NUM_PLANETS; it++){
+    textureBuffer[it] = gl.createTexture();
+    textureImg[it] = new Image();
+    textureImg[it].onload = function(){ //Wykonanie kodu automatycznie po załadowaniu obrazka
+      gl.bindTexture(gl.TEXTURE_2D, textureBuffer[it]);
+      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, textureImg[it]); //Faktyczne załadowanie danych obrazu do pamieci karty graficznej
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE); //Ustawienie parametrów próbkowania tekstury
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+    }
+    var auxStr = "./src/" + (it+1).toString() + ".jpg";
+    textureImg[it].src = auxStr;
+  }
+
+  // END TEMP - ALTERNATIVE REPRESENTATION
+  /////////////////////////////////////////////////////
 
 
   
   //Macierze opisujące położenie wirtualnej kamery w przestrzenie 3D
   let aspect = gl.viewportWidth/gl.viewportHeight;
   let fov = 45.0 * Math.PI / 180.0; //Określenie pola widzenia kamery
-  let zFar = 100.0; //Ustalenie zakresów renderowania sceny 3D (od obiektu najbliższego zNear do najdalszego zFar)
+  let zFar = 1000.0; //Ustalenie zakresów renderowania sceny 3D (od obiektu najbliższego zNear do najdalszego zFar)
   let zNear = 0.1;
   uPMatrix = [
    1.0/(aspect*Math.tan(fov/2)),0                           ,0                         ,0                            ,
@@ -329,22 +361,70 @@ var lightX = 0;
 var lightY = 0;
 var lightZ = 30;
 
-var object1x = 2.0;
+var object1x = 0.0;
 var object1y = 0.0;
 var object1z = -10.0;
 
-var object2x = -2.0;
+var object2x = -30.0;
 var object2y = 0.0;
 var object2z = -10.0;
 
-var scale1 = 1.0;
-var scale2 = 0.5;
+var scale1 = 1;
+var scale2 = 10;
+
+var scales = new Array(NUM_PLANETS);
+var objectPos = new Array(NUM_PLANETS);
+
+for(let it = 0; it < objectPos.length; it++){
+  objectPos[it] = new Array(3);     //for each object create array of 3 elements (for X, Y, Z coords)
+}
+
+              //X, Y, Z
+objectPos[0] = [0, 0, 0];     //planeta 1 - Słońce
+objectPos[1] = [30,0, 0];     //planeta 2 - Merkury
+objectPos[2] = [40,0, 0];     //planeta 3 - Wenus
+objectPos[3] = [50,0, 0];     //planeta 4 - Ziemia
+objectPos[4] = [47,0, 0];     //planeta 5 - Księżyc
+objectPos[5] = [60,0, 0];     //planeta 6 - Mars
+objectPos[6] = [58,0, 0];     //planeta 7 - Fobos - księżyc Marsa
+objectPos[7] = [80,0, 0];     //planeta 8 - Jowisz
+objectPos[8] = [67,0, 0];     //planeta 9 - IO - księżyc Jowisza
+objectPos[9] = [68,0, 0];     //planeta 10 - Europa - księżyc Jowisza
+objectPos[10] = [110,0, 0];   //planeta 11 - Saturn
+objectPos[11] = [98,0, 0];    //planeta 12 - Tytan - księżyc Saturna
+objectPos[12] = [130,0, 0];   //planeta 13 - Uran
+objectPos[13] = [123,0, 0];   //planeta 14 - Oberon - księżyc Uranu
+objectPos[14] = [150,0, 0];   //planeta 15 - Neptun
+objectPos[15] = [143,0, 0];   //planeta 16 - Tryton - księżyc Neptuna
+
+scales[0] = 10;               //planeta 1 - Słońce
+scales[1] = 0.4;              //planeta 2 - Merkury
+scales[2] = 0.9;              //planeta 3 - Wenus
+scales[3] = 1;                //planeta 4 - Ziemia
+scales[4] = 0.1;              //planeta 5 - Księżyc
+scales[5] = 0.5;              //planeta 6 - Mars
+scales[6] = 0.05;             //planeta 7 - Fobos - księżyc Marsa
+scales[7] = 5;                //planeta 8 - Jowisz
+scales[8] = 0.1;              //planeta 9 - IO - księżyc Jowisza
+scales[9] = 0.1;              //planeta 10 - Europa - księżyc Jowisza
+scales[10] = 4;               //planeta 11 - Saturn
+scales[11] = 0.5;             //planeta 12 - Tytan - księżyc Saturna
+scales[12] = 2.5;             //planeta 13 - Uran
+scales[13] = 0.1;             //planeta 14 - Oberon - księżyc Uranu
+scales[14] = 2.3;             //planeta 15 - Neptun
+scales[15] = 0.5;             //planeta 16 - Tryton - księżyc Neptuna
+
 
 // END variables
 //////////////////////////////////////////////////////////
 
 function Tick()
 {  
+  uMatrix = new Array(NUM_PLANETS);
+
+
+
+
   let uMVMatrix1 = [
   1,0,0,0, //Macierz jednostkowa
   0,1,0,0,
@@ -446,19 +526,43 @@ function Tick()
   uMVMatrix2 = MatrixMul(uMVMatrix2,uMVRotZ);
   //alert(uPMatrix);
 
+
+  for(let it = 0; it < uMatrix.length; it++){
+    let uMVObject = [
+    1,0,0,0,
+    0,1,0,0,
+    0,0,1,0,
+    objectPos[it][0], objectPos[it][1], objectPos[it][2], 1
+    ];
+
+    //SKALA:
+    let uMVScale = [
+    scales[it],0,0,0,
+    0,scales[it],0,0,
+    0,0,scales[it],0,
+    0,0,0,1
+    ];
+
+    uMatrix[it] = MatrixMul(uMVMatrix1,uMVScale);
+    uMatrix[it] = MatrixMul(uMatrix[it],uMVObject);
+    uMatrix[it] = MatrixMul(uMatrix[it],uMVRotX);
+    uMatrix[it] = MatrixMul(uMatrix[it],uMVRotY);
+    uMatrix[it] = MatrixMul(uMatrix[it],uMVRotZ);
+  }
+
   
   //Render Scene
   gl.viewport(0, 0, gl.viewportWidth, gl.viewportHeight); 
-  gl.clearColor(1.0,0.0,0.0,1.0); //Wyczyszczenie obrazu kolorem czerwonym
+  gl.clearColor(0.17,0.18,0.47,1.0); //Wyczyszczenie obrazu kolorem ciemnoniebieskim (#2B2F77)  ---czerwonym---
   gl.clearDepth(1.0);             //Wyczyścienie bufora głebi najdalszym planem
-  gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+  gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);  
   gl.useProgram(shaderProgram)   //Użycie przygotowanego programu shaderowego
   
   gl.enable(gl.DEPTH_TEST);           // Włączenie testu głębi - obiekty bliższe mają przykrywać obiekty dalsze
   gl.depthFunc(gl.LEQUAL);            // 
   
   gl.uniformMatrix4fv(gl.getUniformLocation(shaderProgram, "uPMatrix"), false, new Float32Array(uPMatrix)); //Wgranie macierzy kamery do pamięci karty graficznej
-  gl.uniformMatrix4fv(gl.getUniformLocation(shaderProgram, "uMVMatrix"), false, new Float32Array(uMVMatrix1));
+  gl.uniformMatrix4fv(gl.getUniformLocation(shaderProgram, "uMVMatrix"), false, new Float32Array(uMatrix[0]));
   
   gl.enableVertexAttribArray(gl.getAttribLocation(shaderProgram, "aVertexPosition"));  //Przekazanie położenia
   gl.bindBuffer(gl.ARRAY_BUFFER, vertexPositionBuffer);
@@ -479,18 +583,34 @@ function Tick()
   gl.uniform3f(gl.getUniformLocation(shaderProgram, "uLightPosition"),lightX,lightY,lightZ);
   
   gl.activeTexture(gl.TEXTURE0);
-  gl.bindTexture(gl.TEXTURE_2D, textureBuffer);
+  gl.bindTexture(gl.TEXTURE_2D, textureBuffer[0]);
   gl.uniform1i(gl.getUniformLocation(shaderProgram, "uSampler"), 0);
   
   gl.drawArrays(gl.TRIANGLES, 0, vertexPositionBuffer.numItems*vertexPositionBuffer.itemSize); //Faktyczne wywołanie rendrowania
 
 
   //Drugi Obiekt
-  gl.uniformMatrix4fv(gl.getUniformLocation(shaderProgram, "uMVMatrix"), false, new Float32Array(uMVMatrix2));
-  gl.bindTexture(gl.TEXTURE_2D, textureBuffer2);
-  gl.drawArrays(gl.TRIANGLES, 0, vertexPositionBuffer.numItems*vertexPositionBuffer.itemSize); //Faktyczne wywołanie rendrowania
+  // gl.uniformMatrix4fv(gl.getUniformLocation(shaderProgram, "uMVMatrix"), false, new Float32Array(uMVMatrix2));
+  // //gl.bindTexture(gl.TEXTURE_2D, textureBuffer2);
+  // gl.bindTexture(gl.TEXTURE_2D, textureBuffer[1]);
+  // gl.drawArrays(gl.TRIANGLES, 0, vertexPositionBuffer.numItems*vertexPositionBuffer.itemSize); //Faktyczne wywołanie rendrowania
 
+  //////////////////////////////////////////////////////////
+  // TEMP
+  //
+  //!!TODO: uMVMatrix - as array...
+  //
 
+  //create new planets 
+  for(let it = 1; it < NUM_PLANETS; it++){
+    gl.uniformMatrix4fv(gl.getUniformLocation(shaderProgram, "uMVMatrix"), false, new Float32Array(uMatrix[it]));
+    gl.bindTexture(gl.TEXTURE_2D, textureBuffer[it]);
+    gl.drawArrays(gl.TRIANGLES, 0, vertexPositionBuffer.numItems*vertexPositionBuffer.itemSize); //Faktyczne wywołanie renderowania
+  }
+
+  //
+  // END TEMP
+  ///////////////////////////////////////////////////////////
 
   displayCurrentValues();
   setTimeout(Tick,16);
@@ -503,8 +623,8 @@ function handlekeydown(e)
  if(e.keyCode==83) angleX=angleX-1.0; //S
  if(e.keyCode==68) angleY=angleY+1.0;
  if(e.keyCode==65) angleY=angleY-1.0;
- if(e.keyCode==81) angleZ=angleZ+1.0;
- if(e.keyCode==69) angleZ=angleZ-1.0;
+ if(e.keyCode==81) angleZ=angleZ+1.0; //Q
+ if(e.keyCode==69) angleZ=angleZ-1.0; //E
  //alert(e.keyCode);
  //alert(angleX);
  
@@ -525,8 +645,8 @@ function handlekeydown(e)
  if(e.keyCode==98)  ty -= 0.1;        //NUMPAD 2
  */
 
- if(e.keyCode==107) mZ += 0.1;        //NUMPAD +
- if(e.keyCode==109) mZ -= 0.1;        //NUMPAD -
+ if(e.keyCode==107) mZ += 1;        //NUMPAD +
+ if(e.keyCode==109) mZ -= 1;        //NUMPAD -
  if(e.keyCode==100) mX -= 0.1;        //NUMPAD 4
  if(e.keyCode==102) mX += 0.1;        //NUMPAD 6
  if(e.keyCode==104) mY += 0.1;        //NUMPAD 8
