@@ -1,0 +1,927 @@
+<html>
+
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <script type="text/javascript">
+        var gl;
+        var shaderProgram;
+        var uPMatrix;
+        var vertexPositionBuffer;
+        var vertexColorBuffer;
+        var vertexCoordsBuffer;
+        var vertexNormalBuffer;
+
+        function MatrixMul(a, b) //Mnożenie macierzy
+        {
+            let c = [
+                0, 0, 0, 0,
+                0, 0, 0, 0,
+                0, 0, 0, 0,
+                0, 0, 0, 0
+            ]
+            for (let i = 0; i < 4; i++) {
+                for (let j = 0; j < 4; j++) {
+                    c[i * 4 + j] = 0.0;
+                    for (let k = 0; k < 4; k++) {
+                        c[i * 4 + j] += a[i * 4 + k] * b[k * 4 + j];
+                    }
+                }
+            }
+            return c;
+        }
+
+        function createRect2(p1x, p1y, p1z, p2x, p2y, p2z, p3x, p3y, p3z, p4x, p4y, p4z) {
+            let vertexPosition = [p1x, p1y, p1z, p2x, p2y, p2z, p4x, p4y, p4z,  //Pierwszy trójkąt
+                p1x, p1y, p1z, p4x, p4y, p4z, p3x, p3y, p3z]; //Drugi trójkąt
+
+            return vertexPosition;
+        }
+
+        function createRectCoords(mu, mv, dau, dav, dbu, dbv) {
+            let p1u = mu; p1v = mv;
+            let p2u = mu + dau; p2v = mv + dav;
+            let p3u = mu + dbu; p3v = mv + dbv;
+            let p4u = mu + dau + dbu; p4v = mv + dav + dbv;
+
+            let vertexCoord = [p1u, p1v, p2u, p2v, p4u, p4v,  //Pierwszy trójkąt
+                p1u, p1v, p4u, p4v, p3u, p3v]; //Drugi trójkąt
+
+            return vertexCoord;
+        }
+
+        function createRectCoords2(p1u, p1v, p2u, p2v, p3u, p3v, p4u, p4v) {
+            let vertexCoord = [p1u, p1v, p2u, p2v, p4u, p4v,  //Pierwszy trójkąt
+                p1u, p1v, p4u, p4v, p3u, p3v]; //Drugi trójkąt
+
+            return vertexCoord;
+        }
+
+        function createRectColor(r, g, b) {
+            let vertexColor = [r, g, b, r, g, b, r, g, b,  //Pierwszy trójkąt
+                r, g, b, r, g, b, r, g, b]; //Drugi trójkąt
+
+            return vertexColor;
+        }
+
+        function createNormal(p1x, p1y, p1z, p2x, p2y, p2z, p3x, p3y, p3z) //Wyznaczenie wektora normalnego dla trójkąta
+        {
+            let v1x = p2x - p1x;
+            let v1y = p2y - p1y;
+            let v1z = p2z - p1z;
+
+            let v2x = p3x - p1x;
+            let v2y = p3y - p1y;
+            let v2z = p3z - p1z;
+
+            let v3x = v1y * v2z - v1z * v2y;
+            let v3y = v1z * v2x - v1x * v2z;
+            let v3z = v1x * v2y - v1y * v2x;
+
+            vl = Math.sqrt(v3x * v3x + v3y * v3y + v3z * v3z); //Obliczenie długości wektora
+
+            v3x /= vl; //Normalizacja na zakreś -1 1
+            v3y /= vl;
+            v3z /= vl;
+
+            let vertexNormal = [v3x, v3y, v3z, v3x, v3y, v3z, v3x, v3y, v3z];
+            return vertexNormal;
+        }
+
+        function CreateShpere(x, y, z, radius, numStepsElevation, numStepsAngle) {
+            //Opis sceny 3D, położenie punktów w przestrzeni 3D w formacie X,Y,Z
+            let vertexPosition = []; //3 punkty po 3 składowe - X1,Y1,Z1, X2,Y2,Z2, X3,Y3,Z3 - 1 trójkąt
+            let vertexNormal = [];
+            let vertexColor = []; //3 punkty po 3 składowe - R1,G1,B1, R2,G2,B2, R3,G3,B3 - 1 trójkąt
+            let vertexCoords = []; //3 punkty po 2 składowe - U1,V1, U2,V2, U3,V3 - 1 trójkąt
+
+            let stepElevation = 90 / numStepsElevation;
+            let stepAngle = 360 / numStepsAngle;
+            for (let elevation = -90; elevation < 90; elevation += stepElevation) {
+                let radiusXZ = radius * Math.cos(elevation * Math.PI / 180);
+                let radiusY = radius * Math.sin(elevation * Math.PI / 180);
+
+                let radiusXZ2 = radius * Math.cos((elevation + stepElevation) * Math.PI / 180);
+                let radiusY2 = radius * Math.sin((elevation + stepElevation) * Math.PI / 180);
+
+                for (let angle = 0; angle < 360; angle += stepAngle) {
+
+                    let px1 = radiusXZ * Math.cos(angle * Math.PI / 180);
+                    let py1 = radiusY;
+                    let pz1 = radiusXZ * Math.sin(angle * Math.PI / 180);
+
+                    let px2 = radiusXZ * Math.cos((angle + stepAngle) * Math.PI / 180);
+                    let py2 = radiusY;
+                    let pz2 = radiusXZ * Math.sin((angle + stepAngle) * Math.PI / 180);
+
+                    let px3 = radiusXZ2 * Math.cos(angle * Math.PI / 180);
+                    let py3 = radiusY2;
+                    let pz3 = radiusXZ2 * Math.sin(angle * Math.PI / 180);
+
+                    let px4 = radiusXZ2 * Math.cos((angle + stepAngle) * Math.PI / 180);
+                    let py4 = radiusY2;
+                    let pz4 = radiusXZ2 * Math.sin((angle + stepAngle) * Math.PI / 180);
+
+                    vertexPosition.push(...createRect2(px1 + x, py1 + y, pz1 + z, px2 + x, py2 + y, pz2 + z, px3 + x, py3 + y, pz3 + z, px4 + x, py4 + y, pz4 + z));
+
+                    let p1 = Math.sqrt(px1 * px1 + py1 * py1 + pz1 * pz1)
+                    let p2 = Math.sqrt(px2 * px2 + py2 * py2 + pz2 * pz2)
+                    let p3 = Math.sqrt(px3 * px3 + py3 * py3 + pz3 * pz3)
+                    let p4 = Math.sqrt(px4 * px4 + py4 * py4 + pz4 * pz4)
+
+                    px1 /= p1
+                    py1 /= p1
+                    pz1 /= p1
+
+                    px2 /= p2
+                    py2 /= p2
+                    pz2 /= p2
+
+                    px3 /= p3
+                    py3 /= p3
+                    pz3 /= p3
+
+                    px4 /= p4
+                    py4 /= p4
+                    pz4 /= p4
+
+                    vertexNormal.push(...createRect2(px1, py1, pz1, px2, py2, pz2, px3, py3, pz3, px4, py4, pz4));
+
+                    vertexColor.push(...createRectColor(1.0, 1.0, 1.0));
+
+                    vertexCoords.push(...createRectCoords(angle / 360.0, (elevation + 90.0) / 180.0, (stepAngle) / 360.0, 0.0, 0.0, (stepElevation) / 180.0));
+                }
+            }
+
+            return [vertexPosition, vertexColor, vertexCoords, vertexNormal];
+        }
+
+
+        function startGL() {
+            alert("StartGL");
+            let canvas = document.getElementById("canvas3D"); //wyszukanie obiektu w strukturze strony
+            gl = canvas.getContext("experimental-webgl"); //pobranie kontekstu OpenGL'u z obiektu canvas
+            gl.viewportWidth = canvas.width; //przypisanie wybranej przez nas rozdzielczości do systemu OpenGL
+            gl.viewportHeight = canvas.height;
+
+            //Kod shaderów
+            const vertextShaderSource = ` //Znak akcentu z przycisku tyldy - na lewo od przycisku 1 na klawiaturze
+    precision highp float;
+    attribute vec3 aVertexPosition;
+    attribute vec3 aVertexColor;
+    attribute vec2 aVertexCoords;
+    attribute vec3 aVertexNormal;
+    uniform mat4 uMVMatrix;
+    uniform mat4 uPMatrix;
+    varying vec3 vPos;
+    varying vec3 vColor;
+    varying vec2 vTexUV;
+    varying vec3 vNormal;
+    void main(void) {
+      gl_Position = uPMatrix * uMVMatrix * vec4(aVertexPosition, 1.0); //Dokonanie transformacji położenia punktów z przestrzeni 3D do przestrzeni obrazu (2D)
+      vPos = aVertexPosition;
+      vColor = aVertexColor;
+      vTexUV = aVertexCoords;
+      vNormal = aVertexNormal;
+    }
+  `;
+            const fragmentShaderSource = `
+    precision highp float;
+    varying vec3 vPos;
+    varying vec3 vColor;
+    varying vec2 vTexUV;
+    varying vec3 vNormal;
+    uniform sampler2D uSampler;
+    uniform vec3 uLightPosition;
+    void main(void) {
+       vec3 lightDirection = normalize(-(uLightPosition - vPos));
+       float brightness = max(dot(vNormal,lightDirection), 0.0);
+      //gl_FragColor = vec4(vColor,1.0); //Ustalenie stałego koloru wszystkich punktów sceny
+      //gl_FragColor = texture2D(uSampler,vTexUV)*vec4(vColor,1.0); //Odczytanie punktu tekstury i przypisanie go jako koloru danego punktu renderowaniej figury
+      //gl_FragColor = vec4((vNormal+vec3(1.0,1.0,1.0))/2.0,1.0);
+      gl_FragColor = clamp(texture2D(uSampler,vTexUV) * vec4(brightness,brightness,brightness,1.0),0.0,1.0);
+    }
+  `;
+            let fragmentShader = gl.createShader(gl.FRAGMENT_SHADER); //Stworzenie obiektu shadera
+            let vertexShader = gl.createShader(gl.VERTEX_SHADER);
+            gl.shaderSource(fragmentShader, fragmentShaderSource); //Podpięcie źródła kodu shader
+            gl.shaderSource(vertexShader, vertextShaderSource);
+            gl.compileShader(fragmentShader); //Kompilacja kodu shader
+            gl.compileShader(vertexShader);
+            if (!gl.getShaderParameter(fragmentShader, gl.COMPILE_STATUS)) { //Sprawdzenie ewentualnych błedów kompilacji
+                alert(gl.getShaderInfoLog(fragmentShader));
+                return null;
+            }
+            if (!gl.getShaderParameter(vertexShader, gl.COMPILE_STATUS)) {
+                alert(gl.getShaderInfoLog(vertexShader));
+                return null;
+            }
+
+            shaderProgram = gl.createProgram(); //Stworzenie obiektu programu
+            gl.attachShader(shaderProgram, vertexShader); //Podpięcie obu shaderów do naszego programu wykonywanego na karcie graficznej
+            gl.attachShader(shaderProgram, fragmentShader);
+            gl.linkProgram(shaderProgram);
+            if (!gl.getProgramParameter(shaderProgram, gl.LINK_STATUS)) alert("Could not initialise shaders");  //Sprawdzenie ewentualnych błedów
+
+            //Opis sceny 3D, położenie punktów w przestrzeni 3D w formacie X,Y,Z
+            let vertexPosition; //3 punkty po 3 składowe - X1,Y1,Z1, X2,Y2,Z2, X3,Y3,Z3 - 1 trójkąt
+            let vertexNormal;
+            let vertexColor; //3 punkty po 3 składowe - R1,G1,B1, R2,G2,B2, R3,G3,B3 - 1 trójkąt
+            let vertexCoords; //3 punkty po 2 składowe - U1,V1, U2,V2, U3,V3 - 1 trójkąt
+
+            [vertexPosition, vertexColor, vertexCoords, vertexNormal] = CreateShpere(0, 0, 0, 1, 60, 120);
+
+
+
+            vertexPositionBuffer = gl.createBuffer(); //Stworzenie tablicy w pamieci karty graficznej
+            gl.bindBuffer(gl.ARRAY_BUFFER, vertexPositionBuffer);
+            gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertexPosition), gl.STATIC_DRAW);
+            vertexPositionBuffer.itemSize = 3; //zdefiniowanie liczby współrzednych per wierzchołek
+            vertexPositionBuffer.numItems = vertexPosition.length / 9; //Zdefinoiowanie liczby trójkątów w naszym buforze
+
+            vertexColorBuffer = gl.createBuffer();
+            gl.bindBuffer(gl.ARRAY_BUFFER, vertexColorBuffer);
+            gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertexColor), gl.STATIC_DRAW);
+            vertexColorBuffer.itemSize = 3;
+            vertexColorBuffer.numItems = vertexColor.length / 9;
+
+            vertexCoordsBuffer = gl.createBuffer();
+            gl.bindBuffer(gl.ARRAY_BUFFER, vertexCoordsBuffer);
+            gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertexCoords), gl.STATIC_DRAW);
+            vertexCoordsBuffer.itemSize = 2;
+            vertexCoordsBuffer.numItems = vertexCoords.length / 6;
+
+            vertexNormalBuffer = gl.createBuffer();
+            gl.bindBuffer(gl.ARRAY_BUFFER, vertexNormalBuffer);
+            gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertexNormal), gl.STATIC_DRAW);
+            vertexNormalBuffer.itemSize = 3;
+            vertexNormalBuffer.numItems = vertexNormal.length / 9;
+
+
+            textureBuffer = gl.createTexture();
+            var textureImg = new Image();
+            textureImg.onload = function () { //Wykonanie kodu automatycznie po załadowaniu obrazka
+                gl.bindTexture(gl.TEXTURE_2D, textureBuffer);
+                gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, textureImg); //Faktyczne załadowanie danych obrazu do pamieci karty graficznej
+                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE); //Ustawienie parametrów próbkowania tekstury
+                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+            }
+            textureImg.src = "sun.jpg"; //Nazwa obrazka
+
+            textureBuffer2 = gl.createTexture();
+            var textureImg2 = new Image();
+            textureImg2.onload = function () { //Wykonanie kodu automatycznie po załadowaniu obrazka
+                gl.bindTexture(gl.TEXTURE_2D, textureBuffer2);
+                gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, textureImg2); //Faktyczne załadowanie danych obrazu do pamieci karty graficznej
+                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE); //Ustawienie parametrów próbkowania tekstury
+                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+            }
+            textureImg2.src = "mercury.jpg"; //Nazwa obrazka
+
+            textureBuffer3 = gl.createTexture();
+            var textureImg3 = new Image();
+            textureImg3.onload = function () { //Wykonanie kodu automatycznie po załadowaniu obrazka
+                gl.bindTexture(gl.TEXTURE_2D, textureBuffer3);
+                gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, textureImg3); //Faktyczne załadowanie danych obrazu do pamieci karty graficznej
+                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE); //Ustawienie parametrów próbkowania tekstury
+                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+            }
+            textureImg3.src = "venus.jpg"; //Nazwa obrazka
+
+            textureBuffer4 = gl.createTexture();
+            var textureImg4 = new Image();
+            textureImg4.onload = function () { //Wykonanie kodu automatycznie po załadowaniu obrazka
+                gl.bindTexture(gl.TEXTURE_2D, textureBuffer4);
+                gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, textureImg4); //Faktyczne załadowanie danych obrazu do pamieci karty graficznej
+                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE); //Ustawienie parametrów próbkowania tekstury
+                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+            }
+            textureImg4.src = "earth.jpg"; //Nazwa obrazka
+
+            textureBuffer5 = gl.createTexture();
+            var textureImg5 = new Image();
+            textureImg5.onload = function () { //Wykonanie kodu automatycznie po załadowaniu obrazka
+                gl.bindTexture(gl.TEXTURE_2D, textureBuffer5);
+                gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, textureImg5); //Faktyczne załadowanie danych obrazu do pamieci karty graficznej
+                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE); //Ustawienie parametrów próbkowania tekstury
+                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+            }
+            textureImg5.src = "mars.jpg"; //Nazwa obrazka
+
+            textureBuffer6 = gl.createTexture();
+            var textureImg6 = new Image();
+            textureImg6.onload = function () { //Wykonanie kodu automatycznie po załadowaniu obrazka
+                gl.bindTexture(gl.TEXTURE_2D, textureBuffer6);
+                gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, textureImg6); //Faktyczne załadowanie danych obrazu do pamieci karty graficznej
+                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE); //Ustawienie parametrów próbkowania tekstury
+                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+            }
+            textureImg6.src = "jupiter.jpg"; //Nazwa obrazka
+
+            textureBuffer7 = gl.createTexture();
+            var textureImg7 = new Image();
+            textureImg7.onload = function () { //Wykonanie kodu automatycznie po załadowaniu obrazka
+                gl.bindTexture(gl.TEXTURE_2D, textureBuffer7);
+                gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, textureImg7); //Faktyczne załadowanie danych obrazu do pamieci karty graficznej
+                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE); //Ustawienie parametrów próbkowania tekstury
+                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+            }
+            textureImg7.src = "saturn.jpg"; //Nazwa obrazka
+
+            textureBuffer8 = gl.createTexture();
+            var textureImg8 = new Image();
+            textureImg8.onload = function () { //Wykonanie kodu automatycznie po załadowaniu obrazka
+                gl.bindTexture(gl.TEXTURE_2D, textureBuffer8);
+                gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, textureImg8); //Faktyczne załadowanie danych obrazu do pamieci karty graficznej
+                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE); //Ustawienie parametrów próbkowania tekstury
+                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+            }
+            textureImg8.src = "uranus.jpg"; //Nazwa obrazka
+
+            textureBuffer9 = gl.createTexture();
+            var textureImg9 = new Image();
+            textureImg9.onload = function () { //Wykonanie kodu automatycznie po załadowaniu obrazka
+                gl.bindTexture(gl.TEXTURE_2D, textureBuffer9);
+                gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, textureImg9); //Faktyczne załadowanie danych obrazu do pamieci karty graficznej
+                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE); //Ustawienie parametrów próbkowania tekstury
+                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+            }
+            textureImg9.src = "neptune.jpg"; //Nazwa obrazka
+
+            //Macierze opisujące położenie wirtualnej kamery w przestrzenie 3D
+            let aspect = gl.viewportWidth / gl.viewportHeight;
+            let fov = 45.0 * Math.PI / 180.0; //Określenie pola widzenia kamery
+            let zFar = 300.0; //Ustalenie zakresów renderowania sceny 3D (od obiektu najbliższego zNear do najdalszego zFar)
+            let zNear = 0.1;
+            uPMatrix = [
+                1.0 / (aspect * Math.tan(fov / 2)), 0, 0, 0,
+                0, 1.0 / (Math.tan(fov / 2)), 0, 0,
+                0, 0, -(zFar + zNear) / (zFar - zNear), -1,
+                0, 0, -(2 * zFar * zNear) / (zFar - zNear), 0.0,
+            ];
+            Tick();
+        }
+        //let angle = 45.0; //Macierz transformacji świata - określenie położenia kamery
+        let x = 0, y = 1, z = 2;
+
+        let slonceSize = 10;
+        let merkurySize = 1;
+        let wenusSize = 2;
+        let ziemiaSize = 2.3;
+        let marsSize = 1.5;
+        let jowiszSize = 5;
+        let saturnSize = 3;
+        let uranSize = 3;
+        let neptunSize = 2.5;
+
+        let planetDistance = 10;
+        //X Y  Z
+        var sloncePosition = [0, 0, 0];
+        let merkuryPosition = [sloncePosition[x] + slonceSize / 2 + merkurySize / 2 + planetDistance, 0, sloncePosition[x] + slonceSize / 2 + merkurySize / 2 + planetDistance];
+        let wenusPosition = [merkuryPosition[x] + merkurySize / 2 + wenusSize / 2 + planetDistance, 0, merkuryPosition[x] + merkurySize / 2 + wenusSize / 2 + planetDistance];
+        let ziemiaPosition = [wenusPosition[x] + wenusSize / 2 + ziemiaSize / 2 + planetDistance, 0, wenusPosition[x] + wenusSize / 2 + ziemiaSize / 2 + planetDistance];
+        let marsPosition = [ziemiaPosition[x] + ziemiaSize / 2 + marsSize / 2 + planetDistance, 0, ziemiaPosition[x] + ziemiaSize / 2 + marsSize / 2 + planetDistance];
+        let jowiszPosition = [marsPosition[x] + marsSize / 2 + jowiszSize / 2 + planetDistance, 0, marsPosition[x] + marsSize / 2 + jowiszSize / 2 + planetDistance];
+        let saturnPosition = [jowiszPosition[x] + jowiszSize / 2 + saturnSize / 2 + planetDistance, 0, jowiszPosition[x] + jowiszSize / 2 + saturnSize / 2 + planetDistance];
+        let uranPosition = [saturnPosition[x] + saturnSize / 2 + uranSize / 2 + planetDistance, 0, saturnPosition[x] + saturnSize / 2 + uranSize / 2 + planetDistance];
+        let neptunPosition = [uranPosition[x] + uranSize / 2 + neptunSize / 2 + planetDistance, 0, uranPosition[x] + uranSize / 2 + neptunSize / 2 + planetDistance];
+
+
+        var angleZ = 0.0;
+        var angleY = 0.0;
+        var angleX = 0.0;
+        var tx = 0;
+        var ty = 0;
+        var tz = -200;
+
+        var object1x = 0.0;
+        var object1y = 0.0;
+        var object1z = 0.0;
+
+        var angle2 = 0.0;
+        var angler2 = 0.0;
+        var object2x = 0;
+        var object2y = 0.0;
+        var object2z = 0;
+
+        var angle3 = 0.0;
+        var angler3 = 0.0;
+        var object3x = 0.0;
+        var object3y = 0.0;
+        var object3z = 0.0;
+
+        var angle4 = 0.0;
+        var angler4 = 0.0;
+        var object4x = 0.0;
+        var object4y = 0.0;
+        var object4z = 0.0;
+
+        var angle5 = 0.0;
+        var angler5 = 0.0;
+        var object5x = 0.0;
+        var object5y = 0.0;
+        var object5z = 0.0;
+
+        var angle6 = 0.0;
+        var angler6 = 0.0;
+        var object6x = 0.0;
+        var object6y = 0.0;
+        var object6z = 0.0;
+
+        var angle7 = 0.0;
+        var angler7 = 0.0;
+        var object7x = 0.0;
+        var object7y = 0.0;
+        var object7z = 0.0;
+
+        var angle8 = 0.0;
+        var angler8 = 0.0;
+        var object8x = 0.0;
+        var object8y = 0.0;
+        var object8z = 0.0;
+
+        var angle9 = 0.0;
+        var angler9 = 0.0;
+        var object9x = 0.0;
+        var object9y = 0.0;
+        var object9z = 0.0;
+
+        var scale1 = slonceSize;
+        var scale2 = merkurySize;
+        var scale3 = wenusSize;
+        var scale4 = ziemiaSize;
+        var scale5 = marsSize;
+        var scale6 = jowiszSize;
+        var scale7 = saturnSize;
+        var scale8 = uranSize;
+        var scale9 = neptunSize;
+
+        var lightXsun = 0; var lightXmerkury = 0; var lightXwenus = 0; var lightXziemia = 0; var lightXmars = 0; var lightXjowisz = 0; var lightXsaturn = 0; var lightXuran = 0; var lightXneptun = 0;
+        var lightYsun = 0; var lightYmerkury = 0; var lightYwenus = 0; var lightYziemia = 0; var lightYmars = 0; var lightYjowisz = 0; var lightYsaturn = 0; var lightYuran = 0; var lightYneptun = 0;
+        var lightZsun = 0; var lightZmerkury = 0; var lightZwenus = 0; var lightZziemia = 0; var lightZmars = 0; var lightZjowisz = 0; var lightZsaturn = 0; var lightZuran = 0; var lightZneptun = 0;
+
+
+        function Tick() {
+            angle2 = (angle2 - 1) % 360;
+            angler2 = (angler2 + 1.2) % 360;
+            object2x = merkuryPosition[x] * Math.cos(angle2 * Math.PI / 180);
+            object2z = merkuryPosition[z] * Math.sin(angle2 * Math.PI / 180);
+            lightXmerkury = 3 * merkuryPosition[x] * Math.cos((angle2 + angler2) * Math.PI / 180);
+            lightZmerkury = 3 * merkuryPosition[z] * Math.sin((angle2 + angler2) * Math.PI / 180);
+
+            angle3 = (angle3 - 0.8) % 360;
+            angler3 = (angler3 - 0.1) % 360;
+            object3x = wenusPosition[x] * Math.cos(angle3 * Math.PI / 180);
+            object3z = wenusPosition[z] * Math.sin(angle3 * Math.PI / 180);
+            lightXwenus = 3 * wenusPosition[x] * Math.cos((angle3 + angler3) * Math.PI / 180);
+            lightZwenus = 3 * wenusPosition[z] * Math.sin((angle3 + angler3) * Math.PI / 180);
+
+            angle4 = (angle4 - 0.6) % 360;
+            angler4 = (angler4 + 3.5) % 360;
+            object4x = ziemiaPosition[x] * Math.cos(angle4 * Math.PI / 180);
+            object4z = ziemiaPosition[z] * Math.sin(angle4 * Math.PI / 180);
+            lightXziemia = 3 * 30 * Math.cos((angle4 + angler4) * Math.PI / 180);
+            lightZziemia = 3 * 30 * Math.sin((angle4 + angler4) * Math.PI / 180);
+
+            angle5 = (angle5 - 0.4) % 360;
+            angler5 = (angler5 + 3.5) % 360;
+            object5x = marsPosition[x] * Math.cos(angle5 * Math.PI / 180);
+            object5z = marsPosition[z] * Math.sin(angle5 * Math.PI / 180);
+            lightXmars = 3 * marsPosition[x] * Math.cos((angle5 + angler5) * Math.PI / 180);
+            lightZmars = 3 * marsPosition[z] * Math.sin((angle5 + angler5) * Math.PI / 180);
+
+            angle6 = (angle6 - 0.2) % 360;
+            angler6 = (angler6 + 6) % 360;
+            object6x = jowiszPosition[x] * Math.cos(angle6 * Math.PI / 180);
+            object6z = jowiszPosition[z] * Math.sin(angle6 * Math.PI / 180);
+            lightXjowisz = 3 * jowiszPosition[x] * Math.cos((angle6 + angler6) * Math.PI / 180);
+            lightZjowisz = 3 * jowiszPosition[z] * Math.sin((angle6 + angler6) * Math.PI / 180);
+
+            angle7 = (angle7 - 0.1) % 360;
+            angler7 = (angler7 + 6) % 360;
+            object7x = saturnPosition[x] * Math.cos(angle7 * Math.PI / 180);
+            object7z = saturnPosition[z] * Math.sin(angle7 * Math.PI / 180);
+            lightXsaturn = 3 * saturnPosition[x] * Math.cos((angle7 + angler7) * Math.PI / 180);
+            lightZsaturn = 3 * saturnPosition[z] * Math.sin((angle7 + angler7) * Math.PI / 180);
+
+            angle8 = (angle8 - 0.05) % 360;
+            angler8 = (angler8 - 5) % 360;
+            object8x = uranPosition[x] * Math.cos(angle8 * Math.PI / 180);
+            object8z = uranPosition[z] * Math.sin(angle8 * Math.PI / 180);
+            lightXuran = 3 * uranPosition[x] * Math.cos((angle8 + angler8) * Math.PI / 180);
+            lightZuran = 3 * uranPosition[z] * Math.sin((angle8 + angler8) * Math.PI / 180);
+
+            angle9 = (angle9 - 0.03) % 360;
+            angler9 = (angler9 + 5) % 360;
+            object9x = neptunPosition[x] * Math.cos(angle9 * Math.PI / 180);
+            object9z = neptunPosition[z] * Math.sin(angle9 * Math.PI / 180);
+            lightXneptun = 3 * neptunPosition[x] * Math.cos((angle9 + angler9) * Math.PI / 180);
+            lightZneptun = 3 * neptunPosition[z] * Math.sin((angle9 + angler9) * Math.PI / 180);
+
+
+            let uMVMatrix1 = [
+                1, 0, 0, 0, //Macierz jednostkowa
+                0, 1, 0, 0,
+                0, 0, 1, 0,
+                0, 0, 0, 1
+            ];
+
+            let uMVMatrix2 = [
+                1, 0, 0, 0, //Macierz jednostkowa
+                0, 1, 0, 0,
+                0, 0, 1, 0,
+                0, 0, 0, 1
+            ];
+
+            let uMVMatrix3 = [
+                1, 0, 0, 0, //Macierz jednostkowa
+                0, 1, 0, 0,
+                0, 0, 1, 0,
+                0, 0, 0, 1
+            ];
+
+            let uMVMatrix4 = [
+                1, 0, 0, 0, //Macierz jednostkowa
+                0, 1, 0, 0,
+                0, 0, 1, 0,
+                0, 0, 0, 1
+            ];
+
+            let uMVMatrix5 = [
+                1, 0, 0, 0, //Macierz jednostkowa
+                0, 1, 0, 0,
+                0, 0, 1, 0,
+                0, 0, 0, 1
+            ];
+
+            let uMVMatrix6 = [
+                1, 0, 0, 0, //Macierz jednostkowa
+                0, 1, 0, 0,
+                0, 0, 1, 0,
+                0, 0, 0, 1
+            ];
+
+            let uMVMatrix7 = [
+                1, 0, 0, 0, //Macierz jednostkowa
+                0, 1, 0, 0,
+                0, 0, 1, 0,
+                0, 0, 0, 1
+            ];
+
+            let uMVMatrix8 = [
+                1, 0, 0, 0, //Macierz jednostkowa
+                0, 1, 0, 0,
+                0, 0, 1, 0,
+                0, 0, 0, 1
+            ];
+
+            let uMVMatrix9 = [
+                1, 0, 0, 0, //Macierz jednostkowa
+                0, 1, 0, 0,
+                0, 0, 1, 0,
+                0, 0, 0, 1
+            ];
+
+            let uMVRotZ = [
+                +Math.cos(angleZ * Math.PI / 180.0), +Math.sin(angleZ * Math.PI / 180.0), 0, 0,
+                -Math.sin(angleZ * Math.PI / 180.0), +Math.cos(angleZ * Math.PI / 180.0), 0, 0,
+                0, 0, 1, 0,
+                0, 0, 0, 1
+            ];
+
+            let uMVRotY = [
+                +Math.cos(angleY * Math.PI / 180.0), 0, -Math.sin(angleY * Math.PI / 180.0), 0,
+                0, 1, 0, 0,
+                +Math.sin(angleY * Math.PI / 180.0), 0, +Math.cos(angleY * Math.PI / 180.0), 0,
+                0, 0, 0, 1
+            ];
+
+            let uMVRotX = [
+                1, 0, 0, 0,
+                0, +Math.cos(angleX * Math.PI / 180.0), +Math.sin(angleX * Math.PI / 180.0), 0,
+                0, -Math.sin(angleX * Math.PI / 180.0), +Math.cos(angleX * Math.PI / 180.0), 0,
+                0, 0, 0, 1
+            ];
+
+            let uMVTranslateZ = [
+                1, 0, 0, 0,
+                0, 1, 0, 0,
+                0, 0, 1, 0,
+                tx, ty, tz, 1
+            ];
+
+            let uMVScale1 = [
+                scale1, 0, 0, 0,
+                0, scale1, 0, 0,
+                0, 0, scale1, 0,
+                0, 0, 0, 1
+            ];
+
+            let uMVScale2 = [
+                scale2, 0, 0, 0,
+                0, scale2, 0, 0,
+                0, 0, scale2, 0,
+                0, 0, 0, 1
+            ];
+
+            let uMVScale3 = [
+                scale3, 0, 0, 0,
+                0, scale3, 0, 0,
+                0, 0, scale3, 0,
+                0, 0, 0, 1
+            ];
+
+            let uMVScale4 = [
+                scale4, 0, 0, 0,
+                0, scale4, 0, 0,
+                0, 0, scale4, 0,
+                0, 0, 0, 1
+            ];
+
+            let uMVScale5 = [
+                scale5, 0, 0, 0,
+                0, scale5, 0, 0,
+                0, 0, scale5, 0,
+                0, 0, 0, 1
+            ];
+
+            let uMVScale6 = [
+                scale6, 0, 0, 0,
+                0, scale6, 0, 0,
+                0, 0, scale6, 0,
+                0, 0, 0, 1
+            ];
+
+            let uMVScale7 = [
+                scale7, 0, 0, 0,
+                0, scale7, 0, 0,
+                0, 0, scale7, 0,
+                0, 0, 0, 1
+            ];
+
+            let uMVScale8 = [
+                scale8, 0, 0, 0,
+                0, scale8, 0, 0,
+                0, 0, scale8, 0,
+                0, 0, 0, 1
+            ];
+
+            let uMVScale9 = [
+                scale9, 0, 0, 0,
+                0, scale9, 0, 0,
+                0, 0, scale9, 0,
+                0, 0, 0, 1
+            ];
+
+            let uMVObject1 = [
+                1, 0, 0, 0,
+                0, 1, 0, 0,
+                0, 0, 1, 0,
+                object1x, object1y, object1z, 1
+            ];
+
+            let uMVObject2 = [
+                +Math.cos(angler2 * Math.PI / 180.0), 0, -Math.sin(angler2 * Math.PI / 180.0), 0,
+                0, 1, 0, 0,
+                +Math.sin(angler2 * Math.PI / 180.0), 0, +Math.cos(angler2 * Math.PI / 180.0), 0,
+                object2x, object2y, object2z, 1
+            ];
+
+            let uMVObject3 = [
+                +Math.cos(angler3 * Math.PI / 180.0), 0, -Math.sin(angler3 * Math.PI / 180.0), 0,
+                0, 1, 0, 0,
+                +Math.sin(angler3 * Math.PI / 180.0), 0, +Math.cos(angler3 * Math.PI / 180.0), 0,
+                object3x, object3y, object3z, 1
+            ];
+
+            let uMVObject4 = [
+                +Math.cos(angler4 * Math.PI / 180.0), 0, -Math.sin(angler4 * Math.PI / 180.0), 0,
+                0, 1, 0, 0,
+                +Math.sin(angler4 * Math.PI / 180.0), 0, +Math.cos(angler4 * Math.PI / 180.0), 0,
+                object4x, object4y, object4z, 1
+            ];
+
+            let uMVObject5 = [
+                +Math.cos(angler5 * Math.PI / 180.0), 0, -Math.sin(angler5 * Math.PI / 180.0), 0,
+                0, 1, 0, 0,
+                +Math.sin(angler5 * Math.PI / 180.0), 0, +Math.cos(angler5 * Math.PI / 180.0), 0,
+                object5x, object5y, object5z, 1
+            ];
+
+            let uMVObject6 = [
+                +Math.cos(angler6 * Math.PI / 180.0), 0, -Math.sin(angler6 * Math.PI / 180.0), 0,
+                0, 1, 0, 0,
+                +Math.sin(angler6 * Math.PI / 180.0), 0, +Math.cos(angler6 * Math.PI / 180.0), 0,
+                object6x, object6y, object6z, 1
+            ];
+
+            let uMVObject7 = [
+                +Math.cos(angler7 * Math.PI / 180.0), 0, -Math.sin(angler7 * Math.PI / 180.0), 0,
+                0, 1, 0, 0,
+                +Math.sin(angler7 * Math.PI / 180.0), 0, +Math.cos(angler7 * Math.PI / 180.0), 0,
+                object7x, object7y, object7z, 1
+            ];
+
+            let uMVObject8 = [
+                +Math.cos(angler8 * Math.PI / 180.0), 0, -Math.sin(angler8 * Math.PI / 180.0), 0,
+                0, 1, 0, 0,
+                +Math.sin(angler8 * Math.PI / 180.0), 0, +Math.cos(angler8 * Math.PI / 180.0), 0,
+                object8x, object8y, object8z, 1
+            ];
+
+            let uMVObject9 = [
+                +Math.cos(angler9 * Math.PI / 180.0), 0, -Math.sin(angler9 * Math.PI / 180.0), 0,
+                0, 1, 0, 0,
+                +Math.sin(angler9 * Math.PI / 180.0), 0, +Math.cos(angler9 * Math.PI / 180.0), 0,
+                object9x, object9y, object9z, 1
+            ];
+
+
+            uMVMatrix1 = MatrixMul(uMVMatrix1, uMVScale1);
+            uMVMatrix1 = MatrixMul(uMVMatrix1, uMVObject1);
+            uMVMatrix1 = MatrixMul(uMVMatrix1, uMVRotX);
+            uMVMatrix1 = MatrixMul(uMVMatrix1, uMVRotY);
+            uMVMatrix1 = MatrixMul(uMVMatrix1, uMVRotZ);
+            uMVMatrix1 = MatrixMul(uMVMatrix1, uMVTranslateZ);
+
+            uMVMatrix2 = MatrixMul(uMVMatrix2, uMVScale2);
+            uMVMatrix2 = MatrixMul(uMVMatrix2, uMVObject2);
+            uMVMatrix2 = MatrixMul(uMVMatrix2, uMVRotX);
+            uMVMatrix2 = MatrixMul(uMVMatrix2, uMVRotY);
+            uMVMatrix2 = MatrixMul(uMVMatrix2, uMVRotZ);
+            uMVMatrix2 = MatrixMul(uMVMatrix2, uMVTranslateZ);
+
+            uMVMatrix3 = MatrixMul(uMVMatrix3, uMVScale3);
+            uMVMatrix3 = MatrixMul(uMVMatrix3, uMVObject3);
+            uMVMatrix3 = MatrixMul(uMVMatrix3, uMVRotX);
+            uMVMatrix3 = MatrixMul(uMVMatrix3, uMVRotY);
+            uMVMatrix3 = MatrixMul(uMVMatrix3, uMVRotZ);
+            uMVMatrix3 = MatrixMul(uMVMatrix3, uMVTranslateZ);
+
+            uMVMatrix4 = MatrixMul(uMVMatrix4, uMVScale4);
+            uMVMatrix4 = MatrixMul(uMVMatrix4, uMVObject4);
+            uMVMatrix4 = MatrixMul(uMVMatrix4, uMVRotX);
+            uMVMatrix4 = MatrixMul(uMVMatrix4, uMVRotY);
+            uMVMatrix4 = MatrixMul(uMVMatrix4, uMVRotZ);
+            uMVMatrix4 = MatrixMul(uMVMatrix4, uMVTranslateZ);
+
+            uMVMatrix5 = MatrixMul(uMVMatrix5, uMVScale5);
+            uMVMatrix5 = MatrixMul(uMVMatrix5, uMVObject5);
+            uMVMatrix5 = MatrixMul(uMVMatrix5, uMVRotX);
+            uMVMatrix5 = MatrixMul(uMVMatrix5, uMVRotY);
+            uMVMatrix5 = MatrixMul(uMVMatrix5, uMVRotZ);
+            uMVMatrix5 = MatrixMul(uMVMatrix5, uMVTranslateZ);
+
+            uMVMatrix6 = MatrixMul(uMVMatrix6, uMVScale6);
+            uMVMatrix6 = MatrixMul(uMVMatrix6, uMVObject6);
+            uMVMatrix6 = MatrixMul(uMVMatrix6, uMVRotX);
+            uMVMatrix6 = MatrixMul(uMVMatrix6, uMVRotY);
+            uMVMatrix6 = MatrixMul(uMVMatrix6, uMVRotZ);
+            uMVMatrix6 = MatrixMul(uMVMatrix6, uMVTranslateZ);
+
+            uMVMatrix7 = MatrixMul(uMVMatrix7, uMVScale7);
+            uMVMatrix7 = MatrixMul(uMVMatrix7, uMVObject7);
+            uMVMatrix7 = MatrixMul(uMVMatrix7, uMVRotX);
+            uMVMatrix7 = MatrixMul(uMVMatrix7, uMVRotY);
+            uMVMatrix7 = MatrixMul(uMVMatrix7, uMVRotZ);
+            uMVMatrix7 = MatrixMul(uMVMatrix7, uMVTranslateZ);
+
+            uMVMatrix8 = MatrixMul(uMVMatrix8, uMVScale8);
+            uMVMatrix8 = MatrixMul(uMVMatrix8, uMVObject8);
+            uMVMatrix8 = MatrixMul(uMVMatrix8, uMVRotX);
+            uMVMatrix8 = MatrixMul(uMVMatrix8, uMVRotY);
+            uMVMatrix8 = MatrixMul(uMVMatrix8, uMVRotZ);
+            uMVMatrix8 = MatrixMul(uMVMatrix8, uMVTranslateZ);
+
+            uMVMatrix9 = MatrixMul(uMVMatrix9, uMVScale9);
+            uMVMatrix9 = MatrixMul(uMVMatrix9, uMVObject9);
+            uMVMatrix9 = MatrixMul(uMVMatrix9, uMVRotX);
+            uMVMatrix9 = MatrixMul(uMVMatrix9, uMVRotY);
+            uMVMatrix9 = MatrixMul(uMVMatrix9, uMVRotZ);
+            uMVMatrix9 = MatrixMul(uMVMatrix9, uMVTranslateZ);
+
+            //alert(uPMatrix);
+
+            //Render Scene
+            gl.viewport(0, 0, gl.viewportWidth, gl.viewportHeight);
+            gl.clearColor(0.0, 0.0, 0.0, 1.0); //Wyczyszczenie obrazu kolorem czerwonym
+            gl.clearDepth(1.0);             //Wyczyścienie bufora głebi najdalszym planem
+            gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+            gl.useProgram(shaderProgram)   //Użycie przygotowanego programu shaderowego
+
+            gl.enable(gl.DEPTH_TEST);           // Włączenie testu głębi - obiekty bliższe mają przykrywać obiekty dalsze
+            gl.depthFunc(gl.LEQUAL);            //
+
+
+            gl.uniformMatrix4fv(gl.getUniformLocation(shaderProgram, "uPMatrix"), false, new Float32Array(uPMatrix)); //Wgranie macierzy kamery do pamięci karty graficznej
+            gl.uniformMatrix4fv(gl.getUniformLocation(shaderProgram, "uMVMatrix"), false, new Float32Array(uMVMatrix1));
+
+            gl.enableVertexAttribArray(gl.getAttribLocation(shaderProgram, "aVertexPosition"));  //Przekazanie położenia
+            gl.bindBuffer(gl.ARRAY_BUFFER, vertexPositionBuffer);
+            gl.vertexAttribPointer(gl.getAttribLocation(shaderProgram, "aVertexPosition"), vertexPositionBuffer.itemSize, gl.FLOAT, false, 0, 0);
+
+            gl.enableVertexAttribArray(gl.getAttribLocation(shaderProgram, "aVertexColor"));  //Przekazanie kolorów
+            gl.bindBuffer(gl.ARRAY_BUFFER, vertexColorBuffer);
+            gl.vertexAttribPointer(gl.getAttribLocation(shaderProgram, "aVertexColor"), vertexColorBuffer.itemSize, gl.FLOAT, false, 0, 0);
+
+            gl.enableVertexAttribArray(gl.getAttribLocation(shaderProgram, "aVertexCoords"));  //Pass the geometry
+            gl.bindBuffer(gl.ARRAY_BUFFER, vertexCoordsBuffer);
+            gl.vertexAttribPointer(gl.getAttribLocation(shaderProgram, "aVertexCoords"), vertexCoordsBuffer.itemSize, gl.FLOAT, false, 0, 0);
+
+            gl.enableVertexAttribArray(gl.getAttribLocation(shaderProgram, "aVertexNormal"));  //Przekazywanie wektorów normalnych
+            gl.bindBuffer(gl.ARRAY_BUFFER, vertexNormalBuffer);
+            gl.vertexAttribPointer(gl.getAttribLocation(shaderProgram, "aVertexNormal"), vertexNormalBuffer.itemSize, gl.FLOAT, false, 0, 0);
+
+            gl.uniform3f(gl.getUniformLocation(shaderProgram, "uLightPosition"), lightXsun, lightYsun, lightZsun);
+
+            gl.activeTexture(gl.TEXTURE0);
+            gl.bindTexture(gl.TEXTURE_2D, textureBuffer);
+            gl.uniform1i(gl.getUniformLocation(shaderProgram, "uSampler"), 0);
+
+            gl.drawArrays(gl.TRIANGLES, 0, vertexPositionBuffer.numItems * vertexPositionBuffer.itemSize); //Faktyczne wywołanie rendrowania
+
+            //Merkury
+            gl.uniform3f(gl.getUniformLocation(shaderProgram, "uLightPosition"), lightXmerkury, lightYmerkury, lightZmerkury);
+            gl.uniformMatrix4fv(gl.getUniformLocation(shaderProgram, "uMVMatrix"), false, new Float32Array(uMVMatrix2));
+            gl.bindTexture(gl.TEXTURE_2D, textureBuffer2);
+            gl.drawArrays(gl.TRIANGLES, 0, vertexPositionBuffer.numItems * vertexPositionBuffer.itemSize); //Faktyczne wywołanie rendrowania
+
+            //Wenus
+            gl.uniform3f(gl.getUniformLocation(shaderProgram, "uLightPosition"), lightXwenus, lightYwenus, lightZwenus);
+            gl.uniformMatrix4fv(gl.getUniformLocation(shaderProgram, "uMVMatrix"), false, new Float32Array(uMVMatrix3));
+            gl.bindTexture(gl.TEXTURE_2D, textureBuffer3);
+            gl.drawArrays(gl.TRIANGLES, 0, vertexPositionBuffer.numItems * vertexPositionBuffer.itemSize); //Faktyczne wywołanie rendrowania
+
+            //Ziemia
+            gl.uniform3f(gl.getUniformLocation(shaderProgram, "uLightPosition"), lightXziemia, lightYziemia, lightZziemia);
+            gl.uniformMatrix4fv(gl.getUniformLocation(shaderProgram, "uMVMatrix"), false, new Float32Array(uMVMatrix4));
+            gl.bindTexture(gl.TEXTURE_2D, textureBuffer4);
+            gl.drawArrays(gl.TRIANGLES, 0, vertexPositionBuffer.numItems * vertexPositionBuffer.itemSize); //Faktyczne wywołanie rendrowania
+
+            //Mars
+            gl.uniform3f(gl.getUniformLocation(shaderProgram, "uLightPosition"), lightXmars, lightYmars, lightZmars);
+            gl.uniformMatrix4fv(gl.getUniformLocation(shaderProgram, "uMVMatrix"), false, new Float32Array(uMVMatrix5));
+            gl.bindTexture(gl.TEXTURE_2D, textureBuffer5);
+            gl.drawArrays(gl.TRIANGLES, 0, vertexPositionBuffer.numItems * vertexPositionBuffer.itemSize); //Faktyczne wywołanie rendrowania
+
+            //Jowisz
+            gl.uniform3f(gl.getUniformLocation(shaderProgram, "uLightPosition"), lightXjowisz, lightYjowisz, lightZjowisz);
+            gl.uniformMatrix4fv(gl.getUniformLocation(shaderProgram, "uMVMatrix"), false, new Float32Array(uMVMatrix6));
+            gl.bindTexture(gl.TEXTURE_2D, textureBuffer6);
+            gl.drawArrays(gl.TRIANGLES, 0, vertexPositionBuffer.numItems * vertexPositionBuffer.itemSize); //Faktyczne wywołanie rendrowania
+
+            //Saturn
+            gl.uniform3f(gl.getUniformLocation(shaderProgram, "uLightPosition"), lightXsaturn, lightYsaturn, lightZsaturn);
+            gl.uniformMatrix4fv(gl.getUniformLocation(shaderProgram, "uMVMatrix"), false, new Float32Array(uMVMatrix7));
+            gl.bindTexture(gl.TEXTURE_2D, textureBuffer7);
+            gl.drawArrays(gl.TRIANGLES, 0, vertexPositionBuffer.numItems * vertexPositionBuffer.itemSize); //Faktyczne wywołanie rendrowania
+
+            //Uran
+            gl.uniform3f(gl.getUniformLocation(shaderProgram, "uLightPosition"), lightXuran, lightYuran, lightZuran);
+            gl.uniformMatrix4fv(gl.getUniformLocation(shaderProgram, "uMVMatrix"), false, new Float32Array(uMVMatrix8));
+            gl.bindTexture(gl.TEXTURE_2D, textureBuffer8);
+            gl.drawArrays(gl.TRIANGLES, 0, vertexPositionBuffer.numItems * vertexPositionBuffer.itemSize); //Faktyczne wywołanie rendrowania
+
+            //Neptun
+            gl.uniform3f(gl.getUniformLocation(shaderProgram, "uLightPosition"), lightXneptun, lightYneptun, lightZneptun);
+            gl.uniformMatrix4fv(gl.getUniformLocation(shaderProgram, "uMVMatrix"), false, new Float32Array(uMVMatrix9));
+            gl.bindTexture(gl.TEXTURE_2D, textureBuffer9);
+            gl.drawArrays(gl.TRIANGLES, 0, vertexPositionBuffer.numItems * vertexPositionBuffer.itemSize); //Faktyczne wywołanie rendrowania
+
+
+            setTimeout(Tick, 50);
+        }
+        function handlekeydown(e) {
+            // Q W E A S D
+            if (e.keyCode == 87) angleX = angleX + 1.0; //W
+            if (e.keyCode == 83) angleX = angleX - 1.0; //S
+            if (e.keyCode == 68) angleY = angleY + 1.0;
+            if (e.keyCode == 65) angleY = angleY - 1.0;
+            if (e.keyCode == 81) angleZ = angleZ + 1.0;
+            if (e.keyCode == 69) angleZ = angleZ - 1.0;
+            //alert(e.keyCode);
+            //alert(angleX);
+
+            if (e.keyCode == 74) tx = tx + 1.0;
+            if (e.keyCode == 76) tx = tx - 1.0;
+            if (e.keyCode == 75) tz = tz - 1.0;
+            if (e.keyCode == 73) tz = tz + 1.0;
+            if (e.keyCode == 107) ty = ty + 1.0; 
+            if (e.keyCode == 109) ty = ty - 1.0; 
+        }
+    </script>
+</head>
+
+<body onload="startGL()" onkeydown="handlekeydown(event)">
+    <canvas id="canvas3D" width="1280" height="720" style="border: solid black 1px"></canvas>
+</body>
+
+</html>
