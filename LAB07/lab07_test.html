@@ -10,7 +10,8 @@ var vertexColorBuffer;
 var vertexCoordsBuffer;
 var vertexNormalBuffer;
 
-const NUM_PLANETS = 10;//16;
+const NUM_PLANETS = 9;//16;
+const NUM_MOONS = 7;
 
 function CreateSphere(x,y,z,radius, numStepsElevation, numStepsAngle)
 {
@@ -272,42 +273,14 @@ function startGL()
   vertexNormalBuffer.itemSize = 3;
   vertexNormalBuffer.numItems = vertexNormal.length/9;
   
-  ////////////////////////////////////
-  
-  /*
-  textureBuffer = gl.createTexture();
-  var textureImg = new Image();
-  textureImg.onload = function() { //Wykonanie kodu automatycznie po załadowaniu obrazka
-    gl.bindTexture(gl.TEXTURE_2D, textureBuffer);
-    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, textureImg); //Faktyczne załadowanie danych obrazu do pamieci karty graficznej
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE); //Ustawienie parametrów próbkowania tekstury
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-  }
-  textureImg.src="./src/earth.jpg"; //Nazwa obrazka
-
-
-
-  textureBuffer2 = gl.createTexture();
-  var textureImg2 = new Image();
-  textureImg2.onload = function() { //Wykonanie kodu automatycznie po załadowaniu obrazka
-    gl.bindTexture(gl.TEXTURE_2D, textureBuffer2);
-    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, textureImg2); //Faktyczne załadowanie danych obrazu do pamieci karty graficznej
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE); //Ustawienie parametrów próbkowania tekstury
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-  }
-  textureImg2.src="./src/mars.jpg"; //Nazwa obrazka
-  */
-
   ///////////////////////////////////////////////////// <------------------------ !WORKS WELL! ------------------------>
   // TEMP - ALTERNATIVE REPRESENTATION
   //
   // all planets presented in array
   //
 
-  textureBuffer = new Array(NUM_PLANETS);     // create empty array of texture buffers
-  var textureImg = new Array(NUM_PLANETS);        // create empty array of texture imgs
+  textureBuffer = new Array(NUM_PLANETS+NUM_MOONS);     // create empty array of texture buffers
+  var textureImg = new Array(NUM_PLANETS+NUM_MOONS);        // create empty array of texture imgs
 
   for(let it = 0; it < NUM_PLANETS; it++){
     textureBuffer[it] = gl.createTexture();
@@ -321,6 +294,20 @@ function startGL()
     }
     var auxStr = "./src/" + (it+1).toString() + ".jpg";
     textureImg[it].src = auxStr;
+  }
+
+  for(let it = 0; it < NUM_MOONS; it++){
+    textureBuffer[it+NUM_PLANETS] = gl.createTexture();
+    textureImg[it+NUM_PLANETS] = new Image();
+    textureImg[it+NUM_PLANETS].onload = function(){ //Wykonanie kodu automatycznie po załadowaniu obrazka
+      gl.bindTexture(gl.TEXTURE_2D, textureBuffer[it+NUM_PLANETS]);
+      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, textureImg[it+NUM_PLANETS]); //Faktyczne załadowanie danych obrazu do pamieci karty graficznej
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE); //Ustawienie parametrów próbkowania tekstury
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+    }
+    var auxStr = "./src/m" + (it+1).toString() + ".jpg";
+    textureImg[it+NUM_PLANETS].src = auxStr;
   }
 
   // END TEMP - ALTERNATIVE REPRESENTATION
@@ -358,28 +345,13 @@ var mX = 0;
 var mY = 0;
 var mZ = -200;
 
-//var lightX = 0;
-//var lightY = 0;
-//var lightZ = 80;
-
-var object1x = 0.0;
-var object1y = 0.0;
-var object1z = -10.0;
-
-var object2x = -30.0;
-var object2y = 0.0;
-var object2z = -10.0;
-
-var scale1 = 1;
-var scale2 = 10;
-
 ////////////////////////////////////////////////////////////////
 // create array of planet LIGHT directions
 //
 
-var lightX = new Array(NUM_PLANETS);
-var lightY = new Array(NUM_PLANETS);
-var lightZ = new Array(NUM_PLANETS);
+var lightX = new Array(NUM_PLANETS+NUM_MOONS);
+var lightY = new Array(NUM_PLANETS+NUM_MOONS);
+var lightZ = new Array(NUM_PLANETS+NUM_MOONS);
 
 //set LIGHT = 0
 for(let it = 0; it < lightX.length; it++){
@@ -410,24 +382,22 @@ var angleRADIUSdiff = new Array(NUM_PLANETS-1);
 angleSUNdiff[0] = -1;
 angleSUNdiff[1] = -0.8;
 angleSUNdiff[2] = -0.6;
-angleSUNdiff[3] = 0.5;     //Księżyc
 
-angleSUNdiff[4] = -0.4;
-angleSUNdiff[5] = -0.2;
-angleSUNdiff[6] = -0.1;
-angleSUNdiff[7] = -0.05;
-angleSUNdiff[8] = -0.03;
+angleSUNdiff[3] = -0.4;
+angleSUNdiff[4] = -0.2;
+angleSUNdiff[5] = -0.1;
+angleSUNdiff[6] = -0.05;
+angleSUNdiff[7] = -0.03;
 
 angleRADIUSdiff[0] = 1.2;
 angleRADIUSdiff[1] = -0.1;
 angleRADIUSdiff[2] = 3.5;
-angleRADIUSdiff[3] = 0.5;     //Księżyc
 
-angleRADIUSdiff[4] = 3.5;
+angleRADIUSdiff[3] = 3.5;
+angleRADIUSdiff[4] = 6;
 angleRADIUSdiff[5] = 6;
-angleRADIUSdiff[6] = 6;
-angleRADIUSdiff[7] = -5;
-angleRADIUSdiff[8] = 5;
+angleRADIUSdiff[6] = -5;
+angleRADIUSdiff[7] = 5;
 
 
 ////////////////////////////////////////////////////////////////
@@ -444,18 +414,14 @@ objectPos[0] = [0, 0, 0];     //planeta 1 - Słońce
 objectPos[1] = [30,0, 0];     //planeta 2 - Merkury
 objectPos[2] = [40,0, 0];     //planeta 3 - Wenus
 objectPos[3] = [50,0, 0];     //planeta 4 - Ziemia
-objectPos[4] = [3,0, 0];     //planeta 5 - Księżyc       <-- księżyc ma promień obrotu 3, więc liczymy jego pozycję względną i potem dodajemy do pozycji Ziemi...
-objectPos[5] = [60,0, 0];     //planeta 6 - Mars
-//objectPos[6] = [58,0, 0];     //planeta 7 - Fobos - księżyc Marsa
-objectPos[6] = [80,0, 0];     //planeta 8 - Jowisz
-//objectPos[8] = [67,0, 0];     //planeta 9 - IO - księżyc Jowisza
-//objectPos[9] = [66,0, 0];     //planeta 10 - Europa - księżyc Jowisza
-objectPos[7] = [110,0, 0];   //planeta 11 - Saturn
-//objectPos[11] = [98,0, 0];    //planeta 12 - Tytan - księżyc Saturna
-objectPos[8] = [130,0, 0];   //planeta 13 - Uran
-//objectPos[13] = [123,0, 0];   //planeta 14 - Oberon - księżyc Uranu
-objectPos[9] = [150,0, 0];   //planeta 15 - Neptun
-//objectPos[15] = [143,0, 0];   //planeta 16 - Tryton - księżyc Neptuna
+objectPos[4] = [60,0, 0];     //planeta 6 - Mars
+objectPos[5] = [80,0, 0];     //planeta 8 - Jowisz
+objectPos[6] = [110,0, 0];   //planeta 11 - Saturn
+objectPos[7] = [130,0, 0];   //planeta 13 - Uran
+objectPos[8] = [150,0, 0];   //planeta 15 - Neptun
+
+
+const JUPITER = 5;
 
 
 ////////////////////////////////////////////////////////////////
@@ -464,25 +430,65 @@ objectPos[9] = [150,0, 0];   //planeta 15 - Neptun
 var scales = new Array(NUM_PLANETS);
 
 //Ziemia - odnośnik skali
-scales[0] = 10.0;               //planeta 1 - Słońce
+scales[0] = 10.0;             //planeta 1 - Słońce
 scales[1] = 0.4;              //planeta 2 - Merkury
 scales[2] = 0.9;              //planeta 3 - Wenus
-scales[3] = 1.1;                //planeta 4 - Ziemia
-scales[4] = 0.1;              //planeta 5 - Księżyc
-scales[5] = 0.5;              //planeta 6 - Mars
-//scales[6] = 0.05;             //planeta 7 - Fobos - księżyc Marsa
-scales[6] = 3;                //planeta 8 - Jowisz
-//scales[8] = 0.1;              //planeta 9 - IO - księżyc Jowisza
-//scales[9] = 0.1;              //planeta 10 - Europa - księżyc Jowisza
-scales[7] = 2.6;               //planeta 11 - Saturn
-//scales[11] = 0.5;             //planeta 12 - Tytan - księżyc Saturna
-scales[8] = 2;             //planeta 13 - Uran
-//scales[13] = 0.1;             //planeta 14 - Oberon - księżyc Uranu
-scales[9] = 1.8;             //planeta 15 - Neptun
-//scales[15] = 0.5;             //planeta 16 - Tryton - księżyc Neptuna
+scales[3] = 1.1;              //planeta 4 - Ziemia
+scales[4] = 0.5;              //planeta 6 - Mars
+scales[5] = 3;                //planeta 8 - Jowisz
+scales[6] = 2.6;              //planeta 11 - Saturn
+scales[7] = 2;                //planeta 13 - Uran
+scales[8] = 1.8;              //planeta 15 - Neptun
 
 
+//////////////////////////////////////////////////////////
+// MOONS
+//
 
+var angleMOON = new Array(NUM_MOONS);
+var angleRADIUSmoon = new Array(NUM_MOONS);
+
+for(let it = 0; it < angleMOON.length; it++){
+  angleMOON[it] = 0;
+  angleRADIUSmoon[it] = 0;
+}
+
+var angleMOONdiff = new Array(NUM_MOONS);
+var angleRADIUSmoonDiff = new Array(NUM_MOONS);
+
+angleMOONdiff[0] = 1.2;
+angleMOONdiff[1] = 1.5;
+angleMOONdiff[2] = 2.3;
+angleMOONdiff[3] = -1.3;
+angleMOONdiff[4] = -0.8;
+angleMOONdiff[5] = 1.3;
+angleMOONdiff[6] = 0.9;
+
+angleRADIUSmoonDiff[0] = 0.5;
+angleRADIUSmoonDiff[1] = 1;
+angleRADIUSmoonDiff[2] = 1.4;
+angleRADIUSmoonDiff[3] = -2;
+angleRADIUSmoonDiff[4] = -0.3;
+angleRADIUSmoonDiff[5] = 0.6;
+angleRADIUSmoonDiff[6] = 0.9;
+
+var moonPos = new Array(NUM_MOONS);
+moonPos[0] = 3;         //księżyc 1 - Księżyc
+moonPos[1] = 3;         //księżyc 2 - Fobos
+moonPos[2] = 10;        //księżyc 3 - IO
+moonPos[3] = 8;        //księżyc 4 - Europa
+moonPos[4] = 12;        //księżyc 5 - Tytan
+moonPos[5] = 7;         //księżyc 6 - Oberon
+moonPos[6] = 7;         //księżyc 7 - Tryton
+
+var moonScale = new Array(NUM_MOONS);
+moonScale[0] = 0.1;
+moonScale[1] = 0.1;
+moonScale[2] = 0.2;
+moonScale[3] = 0.3;
+moonScale[4] = 0.3;
+moonScale[5] = 0.1;
+moonScale[6] = 0.2;
 
 var horizontal = true;
 var vertical = false;
@@ -496,6 +502,17 @@ function Tick()
 
   for(let it = 0; it < uMatrix.length; it++){
     uMatrix[it] = [
+    1,0,0,0, //Macierz jednostkowa
+    0,1,0,0,
+    0,0,1,0,
+    0,0,0,1
+    ];
+  }
+
+  let uMoonMatrix = new Array(NUM_MOONS);
+
+  for(let it = 0; it < uMoonMatrix.length; it++){
+    uMoonMatrix[it] = [
     1,0,0,0, //Macierz jednostkowa
     0,1,0,0,
     0,0,1,0,
@@ -537,6 +554,8 @@ function Tick()
   tx,ty,tz,1
   ];
 
+  let moonIt = 0;
+
   for(let it = 0; it < uMatrix.length; it++){
 
     let uMVObject = [
@@ -545,6 +564,7 @@ function Tick()
       0,0,1,0,
       objectPos[it][0], objectPos[it][1], objectPos[it][2], 1
       ];
+
 
     //except SUN
     if(it != 0){
@@ -558,10 +578,55 @@ function Tick()
       lightZ[it] = 3 * objectPos[it][0] * Math.sin((angleSUN[it-1] + angleRADIUS[it-1]) * Math.PI/180) * -1;
 
 
-      if(it == 4){      //jeśli to jest Księżyc
-          objectX += objectPos[it-1][0] * Math.cos(angleSUN[it-2] * Math.PI/180);   //wylicz dla Ziemi i dodaj
-          objectZ += objectPos[it-1][0] * Math.sin(angleSUN[it-2] * Math.PI/180);
+      if(it >= 3 && moonIt < NUM_MOONS){      //start with Earth
+          moonMax = 1;
+
+          if(it == JUPITER)
+            moonMax = 2;
+
+          for(let moonC = 0; moonC < moonMax; moonC++){
+            angleMOON[moonIt] = (angleMOON[moonIt] + angleMOONdiff[moonIt]) % 360;
+            angleRADIUSmoon[moonIt] = (angleRADIUSmoon[moonIt] + angleRADIUSmoonDiff[moonIt]) % 360;
+
+            let objectMX = moonPos[moonIt] * Math.cos(angleMOON[moonIt] * Math.PI/180);
+            let objectMZ = moonPos[moonIt] * Math.sin(angleMOON[moonIt] * Math.PI/180);
+
+            lightX[it + NUM_PLANETS] = 3 * moonPos[moonIt] * Math.cos((angleMOON[moonIt] + angleRADIUSmoon[moonIt]) * Math.PI/180) * -1;
+            lightZ[it + NUM_PLANETS] = 3 * moonPos[moonIt] * Math.sin((angleMOON[moonIt] + angleRADIUSmoon[moonIt]) * Math.PI/180) * -1;
+
+            objectMX += objectPos[it][0] * Math.cos(angleSUN[it-1] * Math.PI/180);
+            objectMZ += objectPos[it][0] * Math.sin(angleSUN[it-1] * Math.PI/180);
+
+            let uMoonVObject = [
+              Math.cos(angleRADIUSmoon[moonIt] * Math.PI/180), 0, -Math.sin(angleRADIUSmoon[moonIt] * Math.PI/180), 0,
+              0, 1, 0, 0,
+              Math.sin(angleRADIUSmoon[moonIt] * Math.PI/180), 0, Math.cos(angleRADIUSmoon[moonIt] * Math.PI/180), 0,
+              objectMX, 0, objectMZ, 1
+              ];
+
+              let uMoonVScale = [
+                moonScale[moonIt], 0, 0, 0,
+                0, moonScale[moonIt], 0, 0,
+                0, 0, moonScale[moonIt], 0,
+                0, 0, 0, 1
+              ];
+
+              console.log(uMoonVScale);
+
+              uMoonMatrix[moonIt] = MatrixMul(uMoonMatrix[moonIt], uMoonVScale);
+              uMoonMatrix[moonIt] = MatrixMul(uMoonMatrix[moonIt], uMoonVObject);
+              uMoonMatrix[moonIt] = MatrixMul(uMoonMatrix[moonIt], uMVRotX);
+              uMoonMatrix[moonIt] = MatrixMul(uMoonMatrix[moonIt], uMVRotY);
+              uMoonMatrix[moonIt] = MatrixMul(uMoonMatrix[moonIt], uMVRotZ);
+              uMoonMatrix[moonIt] = MatrixMul(uMoonMatrix[moonIt], uMVTranslateZ);
+              moonIt++;
+          }
       }
+
+      // if(it == 4){      //jeśli to jest Księżyc
+      //     objectX += objectPos[it-1][0] * Math.cos(angleSUN[it-2] * Math.PI/180);   //wylicz dla Ziemi i dodaj
+      //     objectZ += objectPos[it-1][0] * Math.sin(angleSUN[it-2] * Math.PI/180);
+      // }
 
       uMVObject = [
         Math.cos(angleRADIUS[it-1] * Math.PI/180), 0, -Math.sin(angleRADIUS[it-1] * Math.PI/180), 0,
@@ -648,6 +713,14 @@ function Tick()
     gl.drawArrays(gl.TRIANGLES, 0, vertexPositionBuffer.numItems*vertexPositionBuffer.itemSize); //Faktyczne wywołanie renderowania
   }
 
+  //create new moons
+  for(let it = 0; it < NUM_MOONS; it++){
+    gl.uniform3f(gl.getUniformLocation(shaderProgram, "uLightPosition"),lightX[it+NUM_PLANETS],lightY[it+NUM_PLANETS],lightZ[it+NUM_PLANETS]);
+    gl.uniformMatrix4fv(gl.getUniformLocation(shaderProgram, "uMVMatrix"), false, new Float32Array(uMoonMatrix[it]));
+    gl.bindTexture(gl.TEXTURE_2D, textureBuffer[it+NUM_PLANETS]);
+    gl.drawArrays(gl.TRIANGLES, 0, vertexPositionBuffer.numItems*vertexPositionBuffer.itemSize); //Faktyczne wywołanie renderowania
+  }
+
   //
   // END TEMP
   ///////////////////////////////////////////////////////////
@@ -690,14 +763,14 @@ function handlekeydown(e)
  if(e.keyCode==85) lightZ[0]=lightZ[0]+0.5;
  if(e.keyCode==79) lightZ[0]=lightZ[0]-0.5;
 
- /*
- if(e.keyCode==107) tz += 0.1;        //NUMPAD +
- if(e.keyCode==109) tz -= 0.1;        //NUMPAD -
- if(e.keyCode==100) tx -= 0.1;        //NUMPAD 4
- if(e.keyCode==102) tx += 0.1;        //NUMPAD 6
- if(e.keyCode==104) ty += 0.1;        //NUMPAD 8
- if(e.keyCode==98)  ty -= 0.1;        //NUMPAD 2
- */
+
+ if(e.keyCode==107) tz += 1;        //NUMPAD +
+ if(e.keyCode==109) tz -= 1;        //NUMPAD -
+ if(e.keyCode==100) tx -= 1;        //NUMPAD 4
+ if(e.keyCode==102) tx += 1;        //NUMPAD 6
+ if(e.keyCode==104) ty += 1;        //NUMPAD 8
+ if(e.keyCode==98)  ty -= 1;        //NUMPAD 2
+
 
  if(e.keyCode==107) mZ += 1;        //NUMPAD +
  if(e.keyCode==109) mZ -= 1;        //NUMPAD -
