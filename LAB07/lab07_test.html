@@ -10,7 +10,7 @@ var vertexColorBuffer;
 var vertexCoordsBuffer;
 var vertexNormalBuffer;
 
-const NUM_PLANETS = 9;//16;
+const NUM_PLANETS = 10;//16;
 
 function CreateSphere(x,y,z,radius, numStepsElevation, numStepsAngle)
 {
@@ -388,6 +388,10 @@ for(let it = 0; it < lightX.length; it++){
   lightZ[it] = 0;
 }
 
+var lightPosSUN = 50;
+
+//liglightZ[0] = 50;
+
 ////////////////////////////////////////////////////////////////
 // create array of planet ANGLES
 //
@@ -406,20 +410,24 @@ var angleRADIUSdiff = new Array(NUM_PLANETS-1);
 angleSUNdiff[0] = -1;
 angleSUNdiff[1] = -0.8;
 angleSUNdiff[2] = -0.6;
-angleSUNdiff[3] = -0.4;
-angleSUNdiff[4] = -0.2;
-angleSUNdiff[5] = -0.1;
-angleSUNdiff[6] = -0.05;
-angleSUNdiff[7] = -0.03;
+angleSUNdiff[3] = 0.5;     //Księżyc
+
+angleSUNdiff[4] = -0.4;
+angleSUNdiff[5] = -0.2;
+angleSUNdiff[6] = -0.1;
+angleSUNdiff[7] = -0.05;
+angleSUNdiff[8] = -0.03;
 
 angleRADIUSdiff[0] = 1.2;
 angleRADIUSdiff[1] = -0.1;
 angleRADIUSdiff[2] = 3.5;
-angleRADIUSdiff[3] = 3.5;
-angleRADIUSdiff[4] = 6;
+angleRADIUSdiff[3] = 0.5;     //Księżyc
+
+angleRADIUSdiff[4] = 3.5;
 angleRADIUSdiff[5] = 6;
-angleRADIUSdiff[6] = -5;
-angleRADIUSdiff[7] = 5;
+angleRADIUSdiff[6] = 6;
+angleRADIUSdiff[7] = -5;
+angleRADIUSdiff[8] = 5;
 
 
 ////////////////////////////////////////////////////////////////
@@ -436,17 +444,17 @@ objectPos[0] = [0, 0, 0];     //planeta 1 - Słońce
 objectPos[1] = [30,0, 0];     //planeta 2 - Merkury
 objectPos[2] = [40,0, 0];     //planeta 3 - Wenus
 objectPos[3] = [50,0, 0];     //planeta 4 - Ziemia
-//objectPos[4] = [47,0, 0];     //planeta 5 - Księżyc
-objectPos[4] = [60,0, 0];     //planeta 6 - Mars
+objectPos[4] = [3,0, 0];     //planeta 5 - Księżyc       <-- księżyc ma promień obrotu 3, więc liczymy jego pozycję względną i potem dodajemy do pozycji Ziemi...
+objectPos[5] = [60,0, 0];     //planeta 6 - Mars
 //objectPos[6] = [58,0, 0];     //planeta 7 - Fobos - księżyc Marsa
-objectPos[5] = [80,0, 0];     //planeta 8 - Jowisz
+objectPos[6] = [80,0, 0];     //planeta 8 - Jowisz
 //objectPos[8] = [67,0, 0];     //planeta 9 - IO - księżyc Jowisza
-//objectPos[9] = [68,0, 0];     //planeta 10 - Europa - księżyc Jowisza
-objectPos[6] = [110,0, 0];   //planeta 11 - Saturn
+//objectPos[9] = [66,0, 0];     //planeta 10 - Europa - księżyc Jowisza
+objectPos[7] = [110,0, 0];   //planeta 11 - Saturn
 //objectPos[11] = [98,0, 0];    //planeta 12 - Tytan - księżyc Saturna
-objectPos[7] = [130,0, 0];   //planeta 13 - Uran
+objectPos[8] = [130,0, 0];   //planeta 13 - Uran
 //objectPos[13] = [123,0, 0];   //planeta 14 - Oberon - księżyc Uranu
-objectPos[8] = [150,0, 0];   //planeta 15 - Neptun
+objectPos[9] = [150,0, 0];   //planeta 15 - Neptun
 //objectPos[15] = [143,0, 0];   //planeta 16 - Tryton - księżyc Neptuna
 
 
@@ -460,23 +468,24 @@ scales[0] = 10.0;               //planeta 1 - Słońce
 scales[1] = 0.4;              //planeta 2 - Merkury
 scales[2] = 0.9;              //planeta 3 - Wenus
 scales[3] = 1.1;                //planeta 4 - Ziemia
-//scales[4] = 0.1;              //planeta 5 - Księżyc
-scales[4] = 0.5;              //planeta 6 - Mars
+scales[4] = 0.1;              //planeta 5 - Księżyc
+scales[5] = 0.5;              //planeta 6 - Mars
 //scales[6] = 0.05;             //planeta 7 - Fobos - księżyc Marsa
-scales[5] = 3;                //planeta 8 - Jowisz
+scales[6] = 3;                //planeta 8 - Jowisz
 //scales[8] = 0.1;              //planeta 9 - IO - księżyc Jowisza
 //scales[9] = 0.1;              //planeta 10 - Europa - księżyc Jowisza
-scales[6] = 2.6;               //planeta 11 - Saturn
+scales[7] = 2.6;               //planeta 11 - Saturn
 //scales[11] = 0.5;             //planeta 12 - Tytan - księżyc Saturna
-scales[7] = 2;             //planeta 13 - Uran
+scales[8] = 2;             //planeta 13 - Uran
 //scales[13] = 0.1;             //planeta 14 - Oberon - księżyc Uranu
-scales[8] = 1.8;             //planeta 15 - Neptun
+scales[9] = 1.8;             //planeta 15 - Neptun
 //scales[15] = 0.5;             //planeta 16 - Tryton - księżyc Neptuna
 
 
 
 
-var newAngle = 0;
+var horizontal = true;
+var vertical = false;
 
 // END variables
 //////////////////////////////////////////////////////////
@@ -497,30 +506,6 @@ function Tick()
   //////////////////////////////////////////////////
   //POZYCJE OBIEKTÓW
   //
-  // CONCEPT: objectXx - initial position of a planet
-  //          mvX - offset of current camera/planet position (??)
-  // let uMVObject1 = [
-  // 1,0,0,0,
-  // 0,1,0,0,
-  // 0,0,1,0,
-  // //object1x, object1y, object1z, 1
-  // object1x+mX, object1y+mY, object1z+mZ, 1
-  // ];
-
-  // let uMVObject2 = [
-  // 1,0,0,0,
-  // 0,1,0,0,
-  // 0,0,1,0,
-  // //object2x, object2y, object2z, 1
-  // object2x+mX, object2y+mY, object2z+mZ, 1
-  // ];
-
-  // let uMVMatrix = [
-  // 1,0,0,0, //Macierz jednostkowa
-  // 0,1,0,0,
-  // 0,0,1,0,
-  // 0,0,0,1
-  // ];
   
   let uMVRotZ = [
   +Math.cos(angleZ*Math.PI/180.0),+Math.sin(angleZ*Math.PI/180.0),0,0,
@@ -543,22 +528,6 @@ function Tick()
   0,0,0,1
   ];
 
-
-  //SKALA:
-  // let uMVScale1 = [
-  // scale1,0,0,0,
-  // 0,scale1,0,0,
-  // 0,0,scale1,0,
-  // 0,0,0,1
-  // ];
-  
-  // let uMVScale2 = [
-  // scale2,0,0,0,
-  // 0,scale2,0,0,
-  // 0,0,scale2,0,
-  // 0,0,0,1
-  // ];
-
   // //WYMNAŻANIE MACIERZY
   
   let uMVTranslateZ = [
@@ -567,20 +536,6 @@ function Tick()
   0,0,1,0,
   tx,ty,tz,1
   ];
-
-  // uMVMatrix1 = MatrixMul(uMVMatrix1,uMVScale1);
-  // uMVMatrix1 = MatrixMul(uMVMatrix1,uMVObject1);
-  // uMVMatrix1 = MatrixMul(uMVMatrix1,uMVRotX);
-  // uMVMatrix1 = MatrixMul(uMVMatrix1,uMVRotY);
-  // uMVMatrix1 = MatrixMul(uMVMatrix1,uMVRotZ);
-
-  // uMVMatrix2 = MatrixMul(uMVMatrix2,uMVScale2);
-  // uMVMatrix2 = MatrixMul(uMVMatrix2,uMVObject2);
-  // uMVMatrix2 = MatrixMul(uMVMatrix2,uMVRotX);
-  // uMVMatrix2 = MatrixMul(uMVMatrix2,uMVRotY);
-  // uMVMatrix2 = MatrixMul(uMVMatrix2,uMVRotZ);
-  //alert(uPMatrix);
-
 
   for(let it = 0; it < uMatrix.length; it++){
 
@@ -599,8 +554,14 @@ function Tick()
       let objectX = objectPos[it][0] * Math.cos(angleSUN[it-1] * Math.PI/180);
       let objectZ = objectPos[it][0] * Math.sin(angleSUN[it-1] * Math.PI/180);  //second time using X coords, because it shares its value <-- EEEEE??
       
-      lightX[it] = 3 * objectPos[it][0] * Math.cos((angleSUN[it-1] + angleRADIUS[it-1]) * Math.PI/180);
-      lightZ[it] = 3 * objectPos[it][0] * Math.sin((angleSUN[it-1] + angleRADIUS[it-1]) * Math.PI/180);
+      lightX[it] = 3 * objectPos[it][0] * Math.cos((angleSUN[it-1] + angleRADIUS[it-1]) * Math.PI/180) * -1;
+      lightZ[it] = 3 * objectPos[it][0] * Math.sin((angleSUN[it-1] + angleRADIUS[it-1]) * Math.PI/180) * -1;
+
+
+      if(it == 4){      //jeśli to jest Księżyc
+          objectX += objectPos[it-1][0] * Math.cos(angleSUN[it-2] * Math.PI/180);   //wylicz dla Ziemi i dodaj
+          objectZ += objectPos[it-1][0] * Math.sin(angleSUN[it-2] * Math.PI/180);
+      }
 
       uMVObject = [
         Math.cos(angleRADIUS[it-1] * Math.PI/180), 0, -Math.sin(angleRADIUS[it-1] * Math.PI/180), 0,
@@ -625,7 +586,16 @@ function Tick()
     uMatrix[it] = MatrixMul(uMatrix[it],uMVRotZ);
     uMatrix[it] = MatrixMul(uMatrix[it], uMVTranslateZ);
   }
-  
+
+  //SUN's lightPos... ... PRAWIE, ALE SIĘ ŹLE OBRACA
+  if(horizontal){
+    lightX[0] = -lightPosSUN * Math.sin(angleY * Math.PI/180);
+  }
+  else if(vertical){
+    lightY[0] = lightPosSUN * Math.sin(angleX * Math.PI/180);
+    
+  }
+  lightZ[0] = lightPosSUN * Math.cos(angleX * Math.PI/180) * Math.cos(angleY * Math.PI/180);
 
   
   //Render Scene
@@ -664,13 +634,6 @@ function Tick()
   
   gl.drawArrays(gl.TRIANGLES, 0, vertexPositionBuffer.numItems*vertexPositionBuffer.itemSize); //Faktyczne wywołanie rendrowania
 
-
-  //Drugi Obiekt
-  // gl.uniformMatrix4fv(gl.getUniformLocation(shaderProgram, "uMVMatrix"), false, new Float32Array(uMVMatrix2));
-  // //gl.bindTexture(gl.TEXTURE_2D, textureBuffer2);
-  // gl.bindTexture(gl.TEXTURE_2D, textureBuffer[1]);
-  // gl.drawArrays(gl.TRIANGLES, 0, vertexPositionBuffer.numItems*vertexPositionBuffer.itemSize); //Faktyczne wywołanie rendrowania
-
   //////////////////////////////////////////////////////////
   // TEMP
   //
@@ -702,16 +665,30 @@ function handlekeydown(e)
  if(e.keyCode==65) angleY=angleY-1.0;
  if(e.keyCode==81) angleZ=angleZ+1.0; //Q
  if(e.keyCode==69) angleZ=angleZ-1.0; //E
- //alert(e.keyCode);
- //alert(angleX);
+
+ angleX = angleX % 360;
+ angleY = angleY % 360;
+ angleZ = angleZ % 360;
+ 
+ if(e.keyCode==68 || e.keyCode==65){
+   horizontal = true;
+   vertical = false;
+ }
+
+ if(e.keyCode==87 || e.keyCode==83){
+   vertical = true; 
+   horizontal = false;
+ }
+
+
  
  //U I O J K L
- if(e.keyCode==76) lightX=lightX+0.5;
- if(e.keyCode==74) lightX=lightX-0.5;
- if(e.keyCode==73) lightY=lightY+0.5;
- if(e.keyCode==75) lightY=lightY-0.5;
- if(e.keyCode==85) lightZ=lightZ+0.5;
- if(e.keyCode==79) lightZ=lightZ-0.5;
+ if(e.keyCode==76) lightX[0]=lightX[0]+0.5;
+ if(e.keyCode==74) lightX[0]=lightX[0]-0.5;
+ if(e.keyCode==73) lightY[0]=lightY[0]+0.5;
+ if(e.keyCode==75) lightY[0]=lightY[0]-0.5;
+ if(e.keyCode==85) lightZ[0]=lightZ[0]+0.5;
+ if(e.keyCode==79) lightZ[0]=lightZ[0]-0.5;
 
  /*
  if(e.keyCode==107) tz += 0.1;        //NUMPAD +
@@ -732,14 +709,22 @@ function handlekeydown(e)
 
 function displayCurrentValues()
 {
-  document.getElementById("currLightX").innerText = 0;//lightX;
-  document.getElementById("currLightY").innerText = 0;//lightY;
-  document.getElementById("currLightZ").innerText = 0;//lightZ;
+  document.getElementById("currLightX").innerText = lightX[0];
+  document.getElementById("currLightY").innerText = lightY[0];
+  document.getElementById("currLightZ").innerText = lightZ[0];
+  document.getElementById("currAngX").innerText = angleX;
+  document.getElementById("currAngY").innerText = angleY;
+  document.getElementById("currAngZ").innerText = angleZ;
 }
 </script>
 </head>
 <body onload="startGL()" onkeydown="handlekeydown(event)">
 <canvas id="canvas3D" width="1280" height="960" style="border: solid black 1px"></canvas>
+<p><font color="red">----- ANGLE -----</font></p>
+<p>Angle X: <b><font color="green" id="currAngX">-</font></b></p>
+<p>Angle Y: <b><font color="green" id="currAngY">-</font></b></p>
+<p>Angle Z: <b><font color="green" id="currAngZ">-</font></b></p>
+
 <p><font color="red">----- LIGHT -----</font></p>
 <p>Light X: <b><font color="green" id="currLightX">-</font></b></p>
 <p>+X: <b><font color="blue">L</font></b></p>
