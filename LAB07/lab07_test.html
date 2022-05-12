@@ -391,12 +391,12 @@ angleSUNdiff[7] = -0.03;
 
 angleRADIUSdiff[0] = 1.2;
 angleRADIUSdiff[1] = -0.1;
-angleRADIUSdiff[2] = 3.5;
+angleRADIUSdiff[2] = 4;
 
-angleRADIUSdiff[3] = 3.5;
-angleRADIUSdiff[4] = 6;
-angleRADIUSdiff[5] = 6;
-angleRADIUSdiff[6] = -5;
+angleRADIUSdiff[3] = 4.1;
+angleRADIUSdiff[4] = 7.9;
+angleRADIUSdiff[5] = 7.8
+angleRADIUSdiff[6] = -5.5;
 angleRADIUSdiff[7] = 5;
 
 
@@ -622,11 +622,6 @@ function Tick()
               moonIt++;
           }
       }
-
-      // if(it == 4){      //jeśli to jest Księżyc
-      //     objectX += objectPos[it-1][0] * Math.cos(angleSUN[it-2] * Math.PI/180);   //wylicz dla Ziemi i dodaj
-      //     objectZ += objectPos[it-1][0] * Math.sin(angleSUN[it-2] * Math.PI/180);
-      // }
 
       uMVObject = [
         Math.cos(angleRADIUS[it-1] * Math.PI/180), 0, -Math.sin(angleRADIUS[it-1] * Math.PI/180), 0,
