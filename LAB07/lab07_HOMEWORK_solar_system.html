@@ -274,8 +274,6 @@ function startGL()
   vertexNormalBuffer.numItems = vertexNormal.length/9;
   
   ///////////////////////////////////////////////////// <------------------------ !WORKS WELL! ------------------------>
-  // TEMP - ALTERNATIVE REPRESENTATION
-  //
   // all planets presented in array
   //
 
@@ -310,7 +308,7 @@ function startGL()
     textureImg[it+NUM_PLANETS].src = auxStr;
   }
 
-  // END TEMP - ALTERNATIVE REPRESENTATION
+  // END - ALTERNATIVE REPRESENTATION
   /////////////////////////////////////////////////////
 
 
@@ -361,8 +359,6 @@ for(let it = 0; it < lightX.length; it++){
 }
 
 var lightPosSUN = 50;
-
-//liglightZ[0] = 50;
 
 ////////////////////////////////////////////////////////////////
 // create array of planet ANGLES
@@ -556,7 +552,7 @@ function Tick()
 
   let moonIt = 0;
 
-  for(let it = 0; it < uMatrix.length; it++){
+  for(let it = 0; it < uMatrix.length; it++){           //for each planet - count its matrix
 
     let uMVObject = [
       1,0,0,0,
@@ -567,7 +563,7 @@ function Tick()
 
 
     //except SUN
-    if(it != 0){
+    if(it != 0){                                        //if not first planet (not SUN) - count its rotation and current position
       angleSUN[it-1] = (angleSUN[it-1] + angleSUNdiff[it-1]) % 360;           //[it-1], because there is NUM_PLANETS-1 elements in this array
       angleRADIUS[it-1] = (angleRADIUS[it-1] + angleRADIUSdiff[it-1]) % 360;  //[it-1], -||-
 
@@ -578,10 +574,11 @@ function Tick()
       lightZ[it] = 3 * objectPos[it][0] * Math.sin((angleSUN[it-1] + angleRADIUS[it-1]) * Math.PI/180) * -1;
 
 
-      if(it >= 3 && moonIt < NUM_MOONS){      //start with Earth
+      if(it >= 3 && moonIt < NUM_MOONS){      //starting with Earth - add a moon to the planet 
+                                              //(count its relative position and rotation to the planet)
           moonMax = 1;
 
-          if(it == JUPITER)
+          if(it == JUPITER)                   //for JUPYTER there will be 2 moons (WOW... a lot)
             moonMax = 2;
 
           for(let moonC = 0; moonC < moonMax; moonC++){
@@ -591,8 +588,13 @@ function Tick()
             let objectMX = moonPos[moonIt] * Math.cos(angleMOON[moonIt] * Math.PI/180);
             let objectMZ = moonPos[moonIt] * Math.sin(angleMOON[moonIt] * Math.PI/180);
 
-            lightX[it + NUM_PLANETS] = 3 * moonPos[moonIt] * Math.cos((angleMOON[moonIt] + angleRADIUSmoon[moonIt]) * Math.PI/180) * -1;
-            lightZ[it + NUM_PLANETS] = 3 * moonPos[moonIt] * Math.sin((angleMOON[moonIt] + angleRADIUSmoon[moonIt]) * Math.PI/180) * -1;
+            ////////////////////////////////////////////////////////////////////////////////////
+            // <<===========================================================================>
+            // light source is in the centre of a planet, not SUN
+            //
+
+            lightX[moonIt + NUM_PLANETS] = 3 * moonPos[moonIt] * Math.cos((angleMOON[moonIt] + angleRADIUSmoon[moonIt]) * Math.PI/180) * -1;
+            lightZ[moonIt + NUM_PLANETS] = 3 * moonPos[moonIt] * Math.sin((angleMOON[moonIt] + angleRADIUSmoon[moonIt]) * Math.PI/180) * -1;
 
             objectMX += objectPos[it][0] * Math.cos(angleSUN[it-1] * Math.PI/180);
             objectMZ += objectPos[it][0] * Math.sin(angleSUN[it-1] * Math.PI/180);
@@ -611,7 +613,7 @@ function Tick()
                 0, 0, 0, 1
               ];
 
-              console.log(uMoonVScale);
+              //console.log(uMoonVScale);
 
               uMoonMatrix[moonIt] = MatrixMul(uMoonMatrix[moonIt], uMoonVScale);
               uMoonMatrix[moonIt] = MatrixMul(uMoonMatrix[moonIt], uMoonVObject);
@@ -647,7 +649,7 @@ function Tick()
     uMatrix[it] = MatrixMul(uMatrix[it], uMVTranslateZ);
   }
 
-  //SUN's lightPos... ... PRAWIE, ALE SIĘ ŹLE OBRACA
+  //SUN's lightPos... count SUNs light position (I couldn't make use of an object as a light source :(((( - example given in LAB08)
   if(horizontal){
     lightX[0] = -lightPosSUN * Math.sin(angleY * Math.PI/180);
   }
@@ -695,9 +697,7 @@ function Tick()
   gl.drawArrays(gl.TRIANGLES, 0, vertexPositionBuffer.numItems*vertexPositionBuffer.itemSize); //Faktyczne wywołanie rendrowania
 
   //////////////////////////////////////////////////////////
-  // TEMP
-  //
-  //!!TODO: każda planeta musi mieć wyliczone własne światło!!!
+  // FOR EACH planet AND moon COUNT ITS LIGHTING, TEXTURES AND POSITION
   //
 
   //create new planets 
