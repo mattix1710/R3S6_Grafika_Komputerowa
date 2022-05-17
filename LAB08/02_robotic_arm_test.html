@@ -1,6 +1,34 @@
 <html>
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<style>
+  :root{
+    --height: 1000px;
+  }
+  .outerDiv {
+      background-color: #006699;
+      color: #fff;
+      height: var(--height);
+      width: 100%;
+      margin: 0px auto;
+      padding: 5px;
+  }
+  .leftDiv {
+      background-color: #efefef;
+      color: #000;
+      height: var(--height);
+      width: 68%;
+      float: left;
+  }
+  .rightDiv {
+      background-color: #efefef;
+      color: #000;
+      height: var(--height);
+      width: 28%;
+      text-align: center;
+      float: right;
+  }
+</style>
 <script type="text/javascript">
 var gl;
 var shaderProgram;
@@ -285,6 +313,11 @@ function startGL()
    0                         ,0                           ,-(zFar+zNear)/(zFar-zNear)  , -1,
    0                         ,0                           ,-(2*zFar*zNear)/(zFar-zNear) ,0.0,
   ];
+
+  //set display current values ONCE before calling Tick function
+  //LATER: displayCurrentValues is called while any key pressed
+  displayCurrentValues();
+
   Tick();
 } 
 //let angle = 45.0; //Macierz transformacji świata - określenie położenia kamery 
@@ -312,6 +345,23 @@ var Object3PositionZ = 0.0;
 
 var Object3AngleZ = 0.0;
 
+//////////////////////////////
+// new Obj4
+//
+
+var Object4PositionX = 1.0;
+var Object4PositionY = 2.0;
+var Object4PositionZ = 0.0;
+
+var Object4AngleZ = 0.0;
+
+var Object4Sizedx = 0.5;
+var Object4Sizedy = 0.5;
+var Object4Sizedz = 0.5;
+
+//
+//////////////////////////////
+
 var LightSize = 0.1;
 var Object1Sizedx = 1.0;
 var Object1Sizedy = 0.2;
@@ -334,7 +384,9 @@ function Tick()
   let uMMatrix1 = CreateIdentytyMatrix();
   let uMMatrix2 = CreateIdentytyMatrix();
   let uMMatrix3 = CreateIdentytyMatrix();
-  
+  //another block
+  let uMMatrix4 = CreateIdentytyMatrix();
+
   let uVMatrix = CreateIdentytyMatrix();
   
   
@@ -369,6 +421,20 @@ function Tick()
   uMMatrix3 = MatrixMul(uMMatrix3,CreateTranslationMatrix(Object1Sizedx,0.0,0.0)); 
   uMMatrix3 = MatrixMul(uMMatrix3,CreateRotationZMatrix(Object1AngleZ));
   uMMatrix3 = MatrixMul(uMMatrix3,CreateTranslationMatrix(Object1PositionX,Object1PositionY,Object1PositionZ));
+
+  //new object
+  uMMatrix4 = MatrixMul(uMMatrix4, CreateTranslationMatrix(Object4Sizedx, Object4Sizedy, Object4Sizedz));
+  uMMatrix4 = MatrixMul(uMMatrix4, CreateTranslationMatrix(Object4Sizedx, 0.0, 0.0));
+  uMMatrix4 = MatrixMul(uMMatrix4, CreateRotationZMatrix(Object4AngleZ));
+  uMMatrix4 = MatrixMul(uMMatrix4, CreateTranslationMatrix(Object4PositionX, Object4PositionY, Object4PositionZ));
+
+  /*
+    uMMatrix1 = MatrixMul(uMMatrix1,CreateScaleMatrix(Object1Sizedx,Object1Sizedy,Object1Sizedz));
+  uMMatrix1 = MatrixMul(uMMatrix1,CreateTranslationMatrix(Object1Sizedx,0.0,0.0)); 
+  uMMatrix1 = MatrixMul(uMMatrix1,CreateRotationZMatrix(Object1AngleZ));
+  uMMatrix1 = MatrixMul(uMMatrix1,CreateTranslationMatrix(Object1PositionX,Object1PositionY,Object1PositionZ));  
+  */
+
   
   uMMatrix0 = MatrixMul(uMMatrix0,CreateScaleMatrix(LightSize,LightSize,LightSize));
   uMMatrix0 = MatrixMul(uMMatrix0,CreateTranslationMatrix(LightPositionX,LightPositionY,LightPositionZ));
@@ -417,6 +483,19 @@ function Tick()
   gl.uniformMatrix4fv(gl.getUniformLocation(shaderProgram, "uInvMMatrix"), false, new Float32Array(MatrixTransposeInverse(uMMatrix3)));
   gl.uniform3f(gl.getUniformLocation(shaderProgram, "uColor"), 0.0, 0.0, 1.0);
   gl.drawArrays(gl.TRIANGLES, 0, vertexPositionBuffer.numItems*vertexPositionBuffer.itemSize); //Faktyczne wywołanie rendrowania
+
+  //////////////////////////////////////////
+  //
+  //new Object!!
+  //
+
+  gl.uniformMatrix4fv(gl.getUniformLocation(shaderProgram, "uMMatrix"), false, new Float32Array(uMMatrix4));
+  gl.uniformMatrix4fv(gl.getUniformLocation(shaderProgram, "uInvMMatrix"), false, new Float32Array(MatrixTransposeInverse(uMMatrix4)));
+  gl.uniform3f(gl.getUniformLocation(shaderProgram, "uColor"), 0.68, 0.8, 0.3);
+  gl.drawArrays(gl.TRIANGLES, 0, vertexPositionBuffer.numItems*vertexPositionBuffer.itemSize); //Faktyczne wywołanie rendrowania
+
+  //
+  ///////////////////////////////////////////
   
   //Obiekt Światła
   gl.uniformMatrix4fv(gl.getUniformLocation(shaderProgram, "uMMatrix"), false, new Float32Array(uMMatrix0));
@@ -458,10 +537,63 @@ function handlekeydown(e)
  //B N
  if(e.keyCode==66) Object3AngleZ=Object3AngleZ-1;
  if(e.keyCode==78) Object3AngleZ=Object3AngleZ+1;
+
+ //, .
+ if(e.keyCode==108) Object4AngleZ=Object4AngleZ-1;
+ if(e.keyCode==190) Object4AngleZ=Object4AngleZ+1;
+
+
+ displayCurrentValues();
 }
+
+function displayCurrentValues()
+{
+  document.getElementById("currLightX").innerText = LightPositionX;
+  document.getElementById("currLightY").innerText = LightPositionY;
+  document.getElementById("currLightZ").innerText = LightPositionZ;
+
+  document.getElementById("currArmRed").innerText = Object1AngleZ;
+  document.getElementById("currArmGreen").innerText = Object2AngleZ;
+  document.getElementById("currArmBlue").innerText = Object3AngleZ;
+}
+
 </script>
 </head>
 <body onload="startGL()" onkeydown="handlekeydown(event)">
-<canvas id="canvas3D" width="640" height="480" style="border: solid black 1px"></canvas>
+  <div class="outerDiv">
+    <div class="leftDiv">
+      <canvas id="canvas3D" width="960" height="650" style="border: solid black 1px"></canvas>
+    </div>
+    <div class="rightDiv">
+      <p><font color="red">---------- LIGHT ----------</font></p>
+      <p>Light X: <b><font color="green" id="currLightX">-</font></b></p>
+      <p>+X: <b><font color="blue">L</font></b></p>
+      <p>-X: <b><font color="blue">J</font></b></p>
+      <p>Light Y: <b><font color="green" id="currLightY">-</font></b></p>
+      <p>+Y: <b><font color="blue">I</font></b></p>
+      <p>-Y: <b><font color="blue">K</font></b></p>
+      <p>Light Z: <b><font color="green" id="currLightZ">-</font></b></p>
+      <p>+Z: <b><font color="blue">U</font></b></p>
+      <p>-Z: <b><font color="blue">O</font></b></p>
+      <p><font color="red">--------ARM MOVEMENT --------</font></p>
+      <p>RED: <b><font color="green" id="currArmRed">-</font></b></p>
+      <p>UP:   <b><font color="blue">Z</font></b></p>
+      <p>DOWN: <b><font color="blue">X</font></b></p>
+      <p>GREEN: <b><font color="green" id="currArmGreen">-</font></b></p>
+      <p>UP:   <b><font color="blue">V</font></b></p>
+      <p>DOWN: <b><font color="blue">C</font></b></p>
+      <p>BLUE: <b><font color="green" id="currArmBlue">-</font></b></p>
+      <p>UP:   <b><font color="blue">N</font></b></p>
+      <p>DOWN: <b><font color="blue">B</font></b></p>
+      <p>-----------------------------</p>
+      <p>UP: <b><font color="blue">NUMPAD 8</font></b></p>
+      <p>DOWN: <b><font color="blue">NUMPAD 2</font></b></p>
+      <p>LEFT: <b><font color="blue">NUMPAD 4</font></b></p>
+      <p>RIGHT: <b><font color="blue">NUMPAD 6</font></b></p>
+      <p>CLOSE: <b><font color="blue">NUMPAD +</font></b></p>
+      <p>AWAY: <b><font color="blue">NUMPAD -</font></b></p>
+    </div>
+    <div style="clear: both;"></div>
+  </div>
 </body>
 </html>
