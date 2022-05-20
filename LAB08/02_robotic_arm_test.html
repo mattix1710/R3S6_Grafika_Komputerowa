@@ -38,6 +38,8 @@ var vertexColorBuffer;
 var vertexCoordsBuffer;
 var vertexNormalBuffer;
 
+const ROBOT_ELEMENTS = 13;
+
 function MatrixMul(a,b) //Mnożenie macierzy
 {
   let c = [
@@ -327,7 +329,7 @@ var angleY = 0.0;
 var angleX = 0.0;
 var KameraPositionZ = -8.0;
 
-var Object1PositionX = 0.0;
+var Object1PositionX = 3.0;
 var Object1PositionY = 0.0;
 var Object1PositionZ = 0.0;
 
@@ -345,22 +347,194 @@ var Object3PositionZ = 0.0;
 
 var Object3AngleZ = 0.0;
 
-//////////////////////////////
-// new Obj4
+///////////////////////////////////////////////////////////////
+// create arrays for all elements of a robot
 //
 
-var Object4PositionX = 1.0;
-var Object4PositionY = 2.0;
-var Object4PositionZ = 0.0;
+////////////////////////POSITIONS//////////////////////////////
+var ObjectPositionX = new Array(ROBOT_ELEMENTS);
+var ObjectPositionY = new Array(ROBOT_ELEMENTS);
+var ObjectPositionZ = new Array(ROBOT_ELEMENTS);
 
-var Object4AngleZ = 0.0;
+/////////////////////////ANGLE/////////////////////////////////
+var ObjectAngleZ    = new Array(ROBOT_ELEMENTS);
 
-var Object4Sizedx = 0.5;
-var Object4Sizedy = 0.5;
-var Object4Sizedz = 0.5;
+//IDEA: każdy element ma swój osobny ANGLE
+//      ALE - ręce & nogi mają wspólny schemat, z tym, że jedna kończyna "zaczyna" z offsetem czasowym względem drugiej
+
+//////////////////////////SIZE/////////////////////////////////
+var ObjectSizedX    = new Array(ROBOT_ELEMENTS);          //position will be the center of element
+var ObjectSizedY    = new Array(ROBOT_ELEMENTS);
+var ObjectSizedZ    = new Array(ROBOT_ELEMENTS);
+
+//////////////////////////COLOUR///////////////////////////////
+var colours         = new Array(ROBOT_ELEMENTS);
+
+for(let i = 0; i < ROBOT_ELEMENTS; i++){
+  //3-element arrays storing R G B values for colours of each Object
+  colours[i] = [0.1*i, 1-(0.1*i), 1/(i+1)];
+}
 
 //
-//////////////////////////////
+// END create arrays for all elements of a robot
+///////////////////////////////////////////////////////////////
+
+///////////////////////////////////////////////////////////////
+// populate arrays
+//
+
+//TODO:
+var posX = -2;
+
+for(let i = 0; i < ROBOT_ELEMENTS; i++){
+  ObjectPositionZ[i] = 0;
+  if(i < 5){
+     ObjectPositionY[i] = 0;
+     ObjectPositionX[i] = -5;
+  }
+  else{
+    ObjectPositionY[i] = -1;
+    ObjectPositionX[i] = -5;
+  }
+
+  ObjectSizedX[i] = 0.1;
+  ObjectSizedY[i] = 0.1;
+  ObjectSizedZ[i] = 0.1;
+  ObjectAngleZ[i] = 0.0;
+}
+
+///////////////////////////////////////////
+// SETTING SIZES
+//
+// 0. HEAD
+ObjectSizedX[0] = 0.25;
+ObjectSizedY[0] = 0.2;
+ObjectSizedZ[0] = 0.25;
+// 1. UPPER-BODY
+ObjectSizedX[1] = 0.6;
+ObjectSizedY[1] = 0.5;
+ObjectSizedZ[1] = 0.4;
+// 2. LOWER-BODY
+ObjectSizedX[2] = 0.6;
+ObjectSizedY[2] = 0.2;
+ObjectSizedZ[2] = 0.4;
+// 3. LEG_LEFT-UPPER
+ObjectSizedX[3] = 0.2;
+ObjectSizedY[3] = 0.4;
+ObjectSizedZ[3] = 0.2;
+// 4. LEG_LEFT-LOWER
+ObjectSizedX[4] = 0.2;
+ObjectSizedY[4] = 0.4;
+ObjectSizedZ[4] = 0.2;
+// 5. LEG_RIGHT-UPPER
+ObjectSizedX[5] = 0.2;
+ObjectSizedY[5] = 0.4;
+ObjectSizedZ[5] = 0.2;
+// 6. LEG_RIGHT-LOWER
+ObjectSizedX[6] = 0.2;
+ObjectSizedY[6] = 0.4;
+ObjectSizedZ[6] = 0.2;
+// 7. ARM_LEFT-UPPER
+ObjectSizedX[7] = 0.15;
+ObjectSizedY[7] = 0.35;
+ObjectSizedZ[7] = 0.15;
+// 8. ARM_LEFT-LOWER
+ObjectSizedX[8] = 0.15;
+ObjectSizedY[8] = 0.25;
+ObjectSizedZ[8] = 0.15;
+// 9. ARM_HAND-LEFT
+ObjectSizedX[9] = 0.15;
+ObjectSizedY[9] = 0.1;
+ObjectSizedZ[9] = 0.15;
+// 10. ARM_RIGHT-UPPER
+ObjectSizedX[10] = 0.15;
+ObjectSizedY[10] = 0.35;
+ObjectSizedZ[10] = 0.15;
+// 11. ARM_RIGHT-LOWER
+ObjectSizedX[11] = 0.15;
+ObjectSizedY[11] = 0.25;
+ObjectSizedZ[11] = 0.15;
+// 12. ARM_HAND-RIGHT
+ObjectSizedX[12] = 0.15;
+ObjectSizedY[12] = 0.1;
+ObjectSizedZ[12] = 0.15;
+
+//
+// END SETTING SIZES
+///////////////////////////////////////////
+
+///////////////////////////////////////////
+// SETTING POSITIONS
+//
+
+//ObjectSize[x]*2 <-- because size is a scale of a half length
+
+var relativeY = -1;
+// 0. HEAD
+ObjectPositionX[0] = 0;
+ObjectPositionY[0] = relativeY + ObjectSizedY[4] + ObjectSizedY[3]*2 + ObjectSizedY[2]*2 + ObjectSizedY[1]*2 + ObjectSizedY[0];   //move HEAD position by: ...
+ObjectPositionZ[0] = 0.05;
+// 1. UPPER-BODY
+ObjectPositionX[1] = 0;
+ObjectPositionY[1] = relativeY + ObjectSizedY[4] + ObjectSizedY[3]*2 + ObjectSizedY[2]*2 + ObjectSizedY[1];
+ObjectPositionZ[1] = 0.0;
+// 2. LOWER-BODY
+ObjectPositionX[2] = 0;
+ObjectPositionY[2] = relativeY + ObjectSizedY[4] + ObjectSizedY[3]*2 + ObjectSizedY[2];
+ObjectPositionZ[2] = 0.0;
+// 3. LEG_LEFT-UPPER
+ObjectPositionX[3] = -ObjectSizedX[3];
+ObjectPositionY[3] = relativeY + ObjectSizedY[4] + ObjectSizedY[3];
+ObjectPositionZ[3] = 0.0;
+// 4. LEG_LEFT-LOWER
+ObjectPositionX[4] = -ObjectSizedX[4];
+ObjectPositionY[4] = relativeY;
+ObjectPositionZ[4] = 0.0;
+// 5. LEG_RIGHT-UPPER
+ObjectPositionX[5] = ObjectSizedX[5];
+ObjectPositionY[5] = relativeY + ObjectSizedY[6] + ObjectSizedY[5];
+ObjectPositionZ[5] = 0.0;
+// 6. LEG_RIGHT-LOWER
+ObjectPositionX[6] = ObjectSizedX[6];
+ObjectPositionY[6] = relativeY;
+ObjectPositionZ[6] = 0.0;
+
+// 7. ARM_LEFT-UPPER
+ObjectPositionX[7] = -ObjectSizedX[1] - ObjectSizedX[7];
+ObjectPositionY[7] = relativeY + ObjectSizedY[4] + ObjectSizedY[3]*2 + ObjectSizedY[2]*2 + ObjectSizedY[7];
+ObjectPositionZ[7] = 0.0;
+// 8. ARM_LEFT-LOWER
+ObjectPositionX[8] = -ObjectSizedX[1] - ObjectSizedX[8];
+ObjectPositionY[8] = ObjectPositionY[7] - ObjectSizedY[7] - ObjectSizedY[8];
+ObjectPositionZ[8] = 0.0;
+// 9. ARM_HAND-LEFT
+ObjectPositionX[9] = -ObjectSizedX[1] - ObjectSizedX[9];
+ObjectPositionY[9] = ObjectPositionY[8] - ObjectSizedY[8] - ObjectSizedY[9];
+ObjectPositionZ[9] = 0.0;
+// 10. ARM_RIGHT-UPPER
+ObjectPositionX[10] = ObjectSizedX[1] + ObjectSizedX[10];
+ObjectPositionY[10] = relativeY + ObjectSizedY[4] + ObjectSizedY[3]*2 + ObjectSizedY[2]*2 + ObjectSizedY[10];
+ObjectPositionZ[10] = 0.0;
+// 11. ARM_RIGHT-LOWER
+ObjectPositionX[11] = ObjectSizedX[1] + ObjectSizedX[11];
+ObjectPositionY[11] = ObjectPositionY[10] - ObjectSizedY[10] - ObjectSizedY[11];
+ObjectPositionZ[11] = 0.0;
+// 12. ARM_HAND-RIGHT
+ObjectPositionX[12] = ObjectSizedX[1] + ObjectSizedX[12];
+ObjectPositionY[12] = ObjectPositionY[11] - ObjectSizedY[11] - ObjectSizedY[12];
+ObjectPositionZ[12] = 0.0;
+
+//
+// END SETTING POSITIONS
+///////////////////////////////////////////
+
+
+
+
+
+//
+// END populate arrays
+///////////////////////////////////////////////////////////////
 
 var LightSize = 0.1;
 var Object1Sizedx = 1.0;
@@ -384,8 +558,21 @@ function Tick()
   let uMMatrix1 = CreateIdentytyMatrix();
   let uMMatrix2 = CreateIdentytyMatrix();
   let uMMatrix3 = CreateIdentytyMatrix();
-  //another block
-  let uMMatrix4 = CreateIdentytyMatrix();
+
+  ///////////////////////////////////////////////////////////////
+  // create array of all matrices
+  //
+
+  let uMMatrix = new Array(ROBOT_ELEMENTS);
+
+  for(let i = 0; i < ROBOT_ELEMENTS; i++){
+    uMMatrix[i] = CreateIdentytyMatrix();
+  }
+
+  //
+  // END create array of all matrices
+  ///////////////////////////////////////////////////////////////
+
 
   let uVMatrix = CreateIdentytyMatrix();
   
@@ -422,11 +609,13 @@ function Tick()
   uMMatrix3 = MatrixMul(uMMatrix3,CreateRotationZMatrix(Object1AngleZ));
   uMMatrix3 = MatrixMul(uMMatrix3,CreateTranslationMatrix(Object1PositionX,Object1PositionY,Object1PositionZ));
 
-  //new object
-  uMMatrix4 = MatrixMul(uMMatrix4, CreateTranslationMatrix(Object4Sizedx, Object4Sizedy, Object4Sizedz));
-  uMMatrix4 = MatrixMul(uMMatrix4, CreateTranslationMatrix(Object4Sizedx, 0.0, 0.0));
-  uMMatrix4 = MatrixMul(uMMatrix4, CreateRotationZMatrix(Object4AngleZ));
-  uMMatrix4 = MatrixMul(uMMatrix4, CreateTranslationMatrix(Object4PositionX, Object4PositionY, Object4PositionZ));
+  //TEMP: create 11 sets of Matrices^
+  //
+  for(let i = 0; i < ROBOT_ELEMENTS; i++){
+    uMMatrix[i] = MatrixMul(uMMatrix[i], CreateScaleMatrix(ObjectSizedX[i], ObjectSizedY[i], ObjectSizedZ[i]));
+    uMMatrix[i] = MatrixMul(uMMatrix[i], CreateRotationZMatrix(ObjectAngleZ[i]));
+    uMMatrix[i] = MatrixMul(uMMatrix[i], CreateTranslationMatrix(ObjectPositionX[i], ObjectPositionY[i], ObjectPositionZ[i]));
+  }
 
   /*
     uMMatrix1 = MatrixMul(uMMatrix1,CreateScaleMatrix(Object1Sizedx,Object1Sizedy,Object1Sizedz));
@@ -435,7 +624,7 @@ function Tick()
   uMMatrix1 = MatrixMul(uMMatrix1,CreateTranslationMatrix(Object1PositionX,Object1PositionY,Object1PositionZ));  
   */
 
-  
+
   uMMatrix0 = MatrixMul(uMMatrix0,CreateScaleMatrix(LightSize,LightSize,LightSize));
   uMMatrix0 = MatrixMul(uMMatrix0,CreateTranslationMatrix(LightPositionX,LightPositionY,LightPositionZ));
   
@@ -483,20 +672,25 @@ function Tick()
   gl.uniformMatrix4fv(gl.getUniformLocation(shaderProgram, "uInvMMatrix"), false, new Float32Array(MatrixTransposeInverse(uMMatrix3)));
   gl.uniform3f(gl.getUniformLocation(shaderProgram, "uColor"), 0.0, 0.0, 1.0);
   gl.drawArrays(gl.TRIANGLES, 0, vertexPositionBuffer.numItems*vertexPositionBuffer.itemSize); //Faktyczne wywołanie rendrowania
-
+  
   //////////////////////////////////////////
-  //
-  //new Object!!
+  // draw all of 11 Objects
   //
 
-  gl.uniformMatrix4fv(gl.getUniformLocation(shaderProgram, "uMMatrix"), false, new Float32Array(uMMatrix4));
-  gl.uniformMatrix4fv(gl.getUniformLocation(shaderProgram, "uInvMMatrix"), false, new Float32Array(MatrixTransposeInverse(uMMatrix4)));
-  gl.uniform3f(gl.getUniformLocation(shaderProgram, "uColor"), 0.68, 0.8, 0.3);
-  gl.drawArrays(gl.TRIANGLES, 0, vertexPositionBuffer.numItems*vertexPositionBuffer.itemSize); //Faktyczne wywołanie rendrowania
+  for(let i = 0; i < ROBOT_ELEMENTS; i++){
+    gl.uniformMatrix4fv(gl.getUniformLocation(shaderProgram, "uMMatrix"), false, new Float32Array(uMMatrix[i]));
+    gl.uniformMatrix4fv(gl.getUniformLocation(shaderProgram, "uInvMMatrix"), false, new Float32Array(MatrixTransposeInverse(uMMatrix[i])));
+    gl.uniform3f(gl.getUniformLocation(shaderProgram, "uColor"), colours[i][0], colours[i][1], colours[i][2]);
+    gl.drawArrays(gl.TRIANGLES, 0, vertexPositionBuffer.numItems*vertexPositionBuffer.itemSize); //Faktyczne wywołanie rendrowania
+  }
+
+  // for(let i = 0; i < ROBOT_ELEMENTS; i++){
+  //   console.log(colours[i]);
+  // }
 
   //
   ///////////////////////////////////////////
-  
+
   //Obiekt Światła
   gl.uniformMatrix4fv(gl.getUniformLocation(shaderProgram, "uMMatrix"), false, new Float32Array(uMMatrix0));
   gl.uniformMatrix4fv(gl.getUniformLocation(shaderProgram, "uInvMMatrix"), false, new Float32Array(MatrixTransposeInverse(uMMatrix0)));
@@ -538,9 +732,9 @@ function handlekeydown(e)
  if(e.keyCode==66) Object3AngleZ=Object3AngleZ-1;
  if(e.keyCode==78) Object3AngleZ=Object3AngleZ+1;
 
- //, .
- if(e.keyCode==108) Object4AngleZ=Object4AngleZ-1;
- if(e.keyCode==190) Object4AngleZ=Object4AngleZ+1;
+ //[ ]
+ if(e.keyCode==221) Object4AngleZ=Object4AngleZ-1;
+ if(e.keyCode==219) Object4AngleZ=Object4AngleZ+1;
 
 
  displayCurrentValues();
