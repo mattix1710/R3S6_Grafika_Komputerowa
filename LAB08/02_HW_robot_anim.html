@@ -39,6 +39,7 @@ var vertexCoordsBuffer;
 var vertexNormalBuffer;
 
 const ROBOT_ELEMENTS = 13;
+const TICK_PERIOD = 100;
 
 function MatrixMul(a,b) //Mnożenie macierzy
 {
@@ -357,7 +358,51 @@ var ObjectPositionY = new Array(ROBOT_ELEMENTS);
 var ObjectPositionZ = new Array(ROBOT_ELEMENTS);
 
 /////////////////////////ANGLE/////////////////////////////////
-var ObjectAngleZ    = new Array(ROBOT_ELEMENTS);
+var ObjectAngleX    = new Array(ROBOT_ELEMENTS);
+
+var ObjectAngleY    = 0.0;    //ANGLE rotation for a HEAD
+
+
+// SET initial ANGLES of given elements
+var initAngleX      = new Array(ROBOT_ELEMENTS);    //initial angles - for ANIMATION purposes
+//
+for(let i = 0; i < ROBOT_ELEMENTS; i++){
+  initAngleX[i] = 0.0;
+}
+//
+// 7. ARM_LEFT-UPPER
+initAngleX[7] = 10.0;
+// 8. ARM_LEFT-LOWER
+initAngleX[8] = 0.0;
+// 9. ARM_HAND-LEFT
+initAngleX[9] = 10.0;
+// 10. ARM_RIGHT-UPPER
+initAngleX[10] = -40.0;
+// 11. ARM_RIGHT-LOWER
+initAngleX[11] = -40.0;
+// 12. ARM_HAND-RIGHT
+initAngleX[12] = -10.0;
+
+// SET angle difference
+var diffAngleX      = new Array(ROBOT_ELEMENTS);
+//
+for(let i = 0; i < ROBOT_ELEMENTS; i++){
+  diffAngleX[i] = 0.0;
+}
+//
+// 7. ARM_LEFT-UPPER
+diffAngleX[7] = Math.abs(initAngleX[10]) + Math.abs(initAngleX[7]);
+// 8. ARM_LEFT-LOWER
+diffAngleX[8] = Math.abs(initAngleX[11]) + Math.abs(initAngleX[8]);
+// 9. ARM_HAND-LEFT
+diffAngleX[9] = Math.abs(initAngleX[12]) + Math.abs(initAngleX[9]);
+// 10. ARM_RIGHT-UPPER
+diffAngleX[10] = diffAngleX[7];
+// 11. ARM_RIGHT-LOWER
+diffAngleX[11] = diffAngleX[8];
+// 12. ARM_HAND-RIGHT
+diffAngleX[12] = diffAngleX[9];
+
 
 //IDEA: każdy element ma swój osobny ANGLE
 //      ALE - ręce & nogi mają wspólny schemat, z tym, że jedna kończyna "zaczyna" z offsetem czasowym względem drugiej
@@ -400,7 +445,7 @@ for(let i = 0; i < ROBOT_ELEMENTS; i++){
   ObjectSizedX[i] = 0.1;
   ObjectSizedY[i] = 0.1;
   ObjectSizedZ[i] = 0.1;
-  ObjectAngleZ[i] = 0.0;
+  ObjectAngleX[i] = initAngleX[i];
 }
 
 ///////////////////////////////////////////
@@ -528,10 +573,6 @@ ObjectPositionZ[12] = 0.0;
 // END SETTING POSITIONS
 ///////////////////////////////////////////
 
-
-
-
-
 //
 // END populate arrays
 ///////////////////////////////////////////////////////////////
@@ -581,6 +622,12 @@ function Tick()
   uVMatrix = MatrixMul(uVMatrix,CreateRotationYMatrix(angleY));
   uVMatrix = MatrixMul(uVMatrix,CreateRotationZMatrix(angleZ));
   uVMatrix = MatrixMul(uVMatrix,CreateTranslationMatrix(0,0,KameraPositionZ));
+
+
+  //JOINTs
+  // 1. REGULAR
+  // 2. ADD next joints
+
   
   uMMatrix1 = MatrixMul(uMMatrix1,CreateScaleMatrix(Object1Sizedx,Object1Sizedy,Object1Sizedz));
   uMMatrix1 = MatrixMul(uMMatrix1,CreateTranslationMatrix(Object1Sizedx,0.0,0.0)); 
@@ -609,20 +656,68 @@ function Tick()
   uMMatrix3 = MatrixMul(uMMatrix3,CreateRotationZMatrix(Object1AngleZ));
   uMMatrix3 = MatrixMul(uMMatrix3,CreateTranslationMatrix(Object1PositionX,Object1PositionY,Object1PositionZ));
 
-  //TEMP: create 11 sets of Matrices^
+  // create 13 sets of Matrices
   //
   for(let i = 0; i < ROBOT_ELEMENTS; i++){
     uMMatrix[i] = MatrixMul(uMMatrix[i], CreateScaleMatrix(ObjectSizedX[i], ObjectSizedY[i], ObjectSizedZ[i]));
-    uMMatrix[i] = MatrixMul(uMMatrix[i], CreateRotationZMatrix(ObjectAngleZ[i]));
+    //uMMatrix[i] = MatrixMul(uMMatrix[i], CreateTranslationMatrix(0.0,0.0,ObjectSizedZ[i])); 
+    uMMatrix[i] = MatrixMul(uMMatrix[i], CreateRotationXMatrix(ObjectAngleX[i]));
     uMMatrix[i] = MatrixMul(uMMatrix[i], CreateTranslationMatrix(ObjectPositionX[i], ObjectPositionY[i], ObjectPositionZ[i]));
   }
 
-  /*
-    uMMatrix1 = MatrixMul(uMMatrix1,CreateScaleMatrix(Object1Sizedx,Object1Sizedy,Object1Sizedz));
-  uMMatrix1 = MatrixMul(uMMatrix1,CreateTranslationMatrix(Object1Sizedx,0.0,0.0)); 
-  uMMatrix1 = MatrixMul(uMMatrix1,CreateRotationZMatrix(Object1AngleZ));
-  uMMatrix1 = MatrixMul(uMMatrix1,CreateTranslationMatrix(Object1PositionX,Object1PositionY,Object1PositionZ));  
-  */
+  ///////////////////////////////////////////////////////
+  // creating a set of JOINTS for moving parts of a ROBOT
+  //
+
+  // HEAD movement
+  uMMatrix[0] = MatrixMul(uMMatrix[0], CreateRotationYMatrix(ObjectAngleX[0]));
+
+  ///////////////////////////
+  // JOINTS for LEFT ARM
+  //
+  // ARM_LEFT-LOWER
+  uMMatrix[8] = MatrixMul(uMMatrix[8],CreateTranslationMatrix(ObjectSizedX[7]*5, -ObjectSizedY[7]*2 - ObjectSizedY[8], 0.0));     //HIT or MISS method with choosing these variables...
+  uMMatrix[8] = MatrixMul(uMMatrix[8],CreateRotationXMatrix(ObjectAngleX[7]));
+  uMMatrix[8] = MatrixMul(uMMatrix[8],CreateTranslationMatrix(ObjectPositionX[8],ObjectPositionY[7],ObjectPositionZ[8]));
+  //uMMatrix[8] = MatrixMul(uMMatrix[8],CreateTranslationMatrix(0.0, 0.0, ObjectPositionZ[7]));
+  // ARM_HAND-LEFT - for LOWER ARM
+  uMMatrix[9] = MatrixMul(uMMatrix[9],CreateTranslationMatrix(ObjectSizedX[8]*5, -ObjectSizedY[7], 0.0)); 
+  uMMatrix[9] = MatrixMul(uMMatrix[9],CreateRotationXMatrix(ObjectAngleX[8]));
+  uMMatrix[9] = MatrixMul(uMMatrix[9],CreateTranslationMatrix(ObjectPositionX[8],ObjectPositionY[8],0.0));
+  // ARM_HAND-LEFT - for UPPER ARM
+  uMMatrix[9] = MatrixMul(uMMatrix[9],CreateTranslationMatrix(ObjectSizedX[7]*5, -ObjectSizedY[7] - ObjectSizedY[8]*2 - ObjectSizedY[9], 0.0)); 
+  uMMatrix[9] = MatrixMul(uMMatrix[9],CreateRotationXMatrix(ObjectAngleX[7]));
+  uMMatrix[9] = MatrixMul(uMMatrix[9],CreateTranslationMatrix(ObjectPositionX[9],ObjectPositionY[7],ObjectPositionZ[9]));
+
+
+  ///////////////////////////
+  // JOINTS for RIGHT ARM
+  //
+  // ARM_RIGHT-LOWER
+  uMMatrix[11] = MatrixMul(uMMatrix[11], CreateTranslationMatrix(-ObjectSizedX[10]*5, -ObjectSizedY[10]*2 - ObjectSizedY[11], 0.0));
+  uMMatrix[11] = MatrixMul(uMMatrix[11], CreateRotationXMatrix(ObjectAngleX[10]));
+  uMMatrix[11] = MatrixMul(uMMatrix[11], CreateTranslationMatrix(ObjectPositionX[11], ObjectPositionY[10], ObjectPositionZ[11]));
+  // ARM_HAND-RIGHT - for LOWER ARM
+  uMMatrix[12] = MatrixMul(uMMatrix[12],CreateTranslationMatrix(-ObjectSizedX[11]*5, -ObjectSizedY[10], 0.0)); 
+  uMMatrix[12] = MatrixMul(uMMatrix[12],CreateRotationXMatrix(ObjectAngleX[11]));
+  uMMatrix[12] = MatrixMul(uMMatrix[12],CreateTranslationMatrix(ObjectPositionX[11],ObjectPositionY[11],0.0));
+  // ARM_HAND-RIGHT - for UPPER ARM
+  uMMatrix[12] = MatrixMul(uMMatrix[12],CreateTranslationMatrix(-ObjectSizedX[10]*5, -ObjectSizedY[10] - ObjectSizedY[11]*2 - ObjectSizedY[12], 0.0)); 
+  uMMatrix[12] = MatrixMul(uMMatrix[12],CreateRotationXMatrix(ObjectAngleX[10]));
+  uMMatrix[12] = MatrixMul(uMMatrix[12],CreateTranslationMatrix(ObjectPositionX[12],ObjectPositionY[10],ObjectPositionZ[12]));
+  
+  ///////////////////////////
+  // JOINTS for LEFT & RIGHT LEG
+  //
+  // LEG_LEFT-LOWER
+  uMMatrix[4] = MatrixMul(uMMatrix[4], CreateTranslationMatrix(ObjectSizedX[4], ObjectSizedY[2], 0.0));             //ObjectSizedY[2] - offset by lower part of BODY
+  uMMatrix[4] = MatrixMul(uMMatrix[4], CreateRotationXMatrix(ObjectAngleX[3]));
+  uMMatrix[4] = MatrixMul(uMMatrix[4], CreateTranslationMatrix(ObjectPositionX[4], ObjectPositionY[3], ObjectPositionZ[4]));
+  // LEG_RIGHT-LOWER
+  uMMatrix[6] = MatrixMul(uMMatrix[6], CreateTranslationMatrix(-ObjectSizedX[6], ObjectSizedY[2], 0.0));             //ObjectSizedY[2] - offset by lower part of BODY
+  uMMatrix[6] = MatrixMul(uMMatrix[6], CreateRotationXMatrix(ObjectAngleX[5]));
+  uMMatrix[6] = MatrixMul(uMMatrix[6], CreateTranslationMatrix(ObjectPositionX[6], ObjectPositionY[5], ObjectPositionZ[6]));
+  
 
 
   uMMatrix0 = MatrixMul(uMMatrix0,CreateScaleMatrix(LightSize,LightSize,LightSize));
@@ -698,8 +793,51 @@ function Tick()
   gl.uniform1f(gl.getUniformLocation(shaderProgram, "uNormalMul"),-1.0);  
   gl.drawArrays(gl.TRIANGLES, 0, vertexPositionBuffer.numItems*vertexPositionBuffer.itemSize); //Faktyczne wywołanie rendrowania
   
-  setTimeout(Tick,100);
+  animations();
+  displayCurrentValues();
+  setTimeout(Tick,TICK_PERIOD);
 }
+
+const PERIOD = 4.0;                               //PERIOD of animation in seconds
+const PERIOD_HALF = PERIOD/2.0;
+var animCounter = 0;
+const TICK_COUNT_HALF_PERIOD = PERIOD_HALF*1000.0/TICK_PERIOD;
+
+function animations(){
+  //var tickNormalised = TICK_PERIOD/1000;           //from ms to s conversion
+  let direction = -1;
+
+  //INIT angles at the beginning of a period!!
+  if(animCounter == 0){                           //start a period - SET all ANGLES to its initial states
+    ObjectAngleX[7] = initAngleX[7];
+    ObjectAngleX[8] = initAngleX[8];
+    ObjectAngleX[9] = initAngleX[9];
+    ObjectAngleX[10] = initAngleX[10];
+    ObjectAngleX[11] = initAngleX[11];
+    ObjectAngleX[12] = initAngleX[12];
+  }
+  else if(animCounter > 0 && animCounter <= TICK_COUNT_HALF_PERIOD)                       //make first half
+    direction = -1;
+  else if(animCounter > TICK_COUNT_HALF_PERIOD)
+    direction = 1;
+
+  ////////////////////////////
+  //SET new ANGLES
+  ObjectAngleX[7] += direction*(diffAngleX[7]/TICK_COUNT_HALF_PERIOD);
+  ObjectAngleX[8] += direction*(diffAngleX[8]/TICK_COUNT_HALF_PERIOD);
+  ObjectAngleX[9] += direction*(diffAngleX[9]/TICK_COUNT_HALF_PERIOD);
+  ObjectAngleX[10] += (-1)*direction*(diffAngleX[10]/TICK_COUNT_HALF_PERIOD);
+  ObjectAngleX[11] += (-1)*direction*(diffAngleX[11]/TICK_COUNT_HALF_PERIOD);
+  ObjectAngleX[12] += (-1)*direction*(diffAngleX[12]/TICK_COUNT_HALF_PERIOD);
+  //
+  ////////////////////////////
+
+  if(animCounter >= TICK_COUNT_HALF_PERIOD*2)
+    animCounter = 0;                //reset animCounter
+  else
+    animCounter++;
+}
+
 function handlekeydown(e)
 {
  // Q W E A S D
@@ -720,21 +858,43 @@ function handlekeydown(e)
  if(e.keyCode==85) LightPositionZ=LightPositionZ+0.1;
  if(e.keyCode==79) LightPositionZ=LightPositionZ-0.1;
  
+//  //Z X
+//  if(e.keyCode==88) Object1AngleZ=Object1AngleZ-0.1;
+//  if(e.keyCode==90) Object1AngleZ=Object1AngleZ+0.1;
+ 
+//  //C V
+//  if(e.keyCode==67) Object2AngleZ=Object2AngleZ-0.1;
+//  if(e.keyCode==86) Object2AngleZ=Object2AngleZ+0.1;
+ 
+//  //B N
+//  if(e.keyCode==66) Object3AngleZ=Object3AngleZ-1;
+//  if(e.keyCode==78) Object3AngleZ=Object3AngleZ+1;
+
+
  //Z X
- if(e.keyCode==88) Object1AngleZ=Object1AngleZ-0.1;
- if(e.keyCode==90) Object1AngleZ=Object1AngleZ+0.1;
+ if(e.keyCode==88) ObjectAngleX[3] -= 1;
+ if(e.keyCode==90) ObjectAngleX[3] += 1;
  
  //C V
- if(e.keyCode==67) Object2AngleZ=Object2AngleZ-0.1;
- if(e.keyCode==86) Object2AngleZ=Object2AngleZ+0.1;
+ if(e.keyCode==67) ObjectAngleX[4] -= 1;
+ if(e.keyCode==86) ObjectAngleX[4] += 1;
  
- //B N
- if(e.keyCode==66) Object3AngleZ=Object3AngleZ-1;
- if(e.keyCode==78) Object3AngleZ=Object3AngleZ+1;
+//  //B N
+//  if(e.keyCode==66) ObjectAngleX[12] -= 1;
+//  if(e.keyCode==78) ObjectAngleX[12] += 1;
 
- //[ ]
- if(e.keyCode==221) Object4AngleZ=Object4AngleZ-1;
- if(e.keyCode==219) Object4AngleZ=Object4AngleZ+1;
+//  //[ ]
+//  if(e.keyCode==221) Object4AngleZ=Object4AngleZ-1;
+//  if(e.keyCode==219) Object4AngleZ=Object4AngleZ+1;
+
+if(e.keyCode==221){
+  for(let it = 0; it < ROBOT_ELEMENTS; it++)
+    ObjectPositionZ[it] -= 1;
+}
+if(e.keyCode==219){
+  for(let it = 0; it < ROBOT_ELEMENTS; it++)
+    ObjectPositionZ[it] += 1;
+}
 
 
  displayCurrentValues();
@@ -749,6 +909,10 @@ function displayCurrentValues()
   document.getElementById("currArmRed").innerText = Object1AngleZ;
   document.getElementById("currArmGreen").innerText = Object2AngleZ;
   document.getElementById("currArmBlue").innerText = Object3AngleZ;
+
+  document.getElementById("currAngleX.1").innerText = ObjectAngleX[3];
+  document.getElementById("currAngleX.2").innerText = ObjectAngleX[4];
+  //document.getElementById("currAngleX.3").innerText = ObjectAngleX[9];
 }
 
 </script>
@@ -769,6 +933,16 @@ function displayCurrentValues()
       <p>Light Z: <b><font color="green" id="currLightZ">-</font></b></p>
       <p>+Z: <b><font color="blue">U</font></b></p>
       <p>-Z: <b><font color="blue">O</font></b></p>
+      <p><font color="red">---------- ANGLE ----------</font></p>
+      <p>UPPER ARM: <b><font color="green" id="currAngleX.1">-</font></b></p>
+      <p>+X: <b><font color="blue">Z</font></b></p>
+      <p>-X: <b><font color="blue">X</font></b></p>
+      <p>LOWER ARM: <b><font color="green" id="currAngleX.2">-</font></b></p>
+      <p>+Y: <b><font color="blue">C</font></b></p>
+      <p>-Y: <b><font color="blue">V</font></b></p>
+      <!-- <p>HAND: <b><font color="green" id="currAngleX.3">-</font></b></p>
+      <p>+Z: <b><font color="blue">B</font></b></p>
+      <p>-Z: <b><font color="blue">N</font></b></p> -->
       <p><font color="red">--------ARM MOVEMENT --------</font></p>
       <p>RED: <b><font color="green" id="currArmRed">-</font></b></p>
       <p>UP:   <b><font color="blue">Z</font></b></p>
