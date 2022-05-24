@@ -39,7 +39,7 @@ var vertexCoordsBuffer;
 var vertexNormalBuffer;
 
 const ROBOT_ELEMENTS = 13;
-const TICK_PERIOD = 100;
+const TICK_PERIOD = 16;
 
 function MatrixMul(a,b) //Mnożenie macierzy
 {
@@ -330,24 +330,6 @@ var angleY = 0.0;
 var angleX = 0.0;
 var KameraPositionZ = -8.0;
 
-var Object1PositionX = 3.0;
-var Object1PositionY = 0.0;
-var Object1PositionZ = 0.0;
-
-var Object1AngleZ = 0.0;
-
-var Object2PositionX = 1.0;
-var Object2PositionY = 0.0;
-var Object2PositionZ = 0.0;
-
-var Object2AngleZ = 0.0;
-
-var Object3PositionX = 1.0;
-var Object3PositionY = 0.0;
-var Object3PositionZ = 0.0;
-
-var Object3AngleZ = 0.0;
-
 ///////////////////////////////////////////////////////////////
 // create arrays for all elements of a robot
 //
@@ -360,9 +342,6 @@ var ObjectPositionZ = new Array(ROBOT_ELEMENTS);
 /////////////////////////ANGLE/////////////////////////////////
 var ObjectAngleX    = new Array(ROBOT_ELEMENTS);
 
-var ObjectAngleY    = 0.0;    //ANGLE rotation for a HEAD
-
-
 // SET initial ANGLES of given elements
 var initAngleX      = new Array(ROBOT_ELEMENTS);    //initial angles - for ANIMATION purposes
 //
@@ -370,6 +349,14 @@ for(let i = 0; i < ROBOT_ELEMENTS; i++){
   initAngleX[i] = 0.0;
 }
 //
+// 3. LEG_LEFT-UPPER
+initAngleX[3] = -20.0;
+// 4. LEG_LEFT-LOWER
+initAngleX[4] = 0.0;
+// 5. LEG_RIGHT-UPPER
+initAngleX[5] = 25.0;
+// 6. LEG_RIGHT-LOWER
+initAngleX[6] = 20.0;
 // 7. ARM_LEFT-UPPER
 initAngleX[7] = 10.0;
 // 8. ARM_LEFT-LOWER
@@ -390,6 +377,14 @@ for(let i = 0; i < ROBOT_ELEMENTS; i++){
   diffAngleX[i] = 0.0;
 }
 //
+// 3. LEG_LEFT-UPPER
+diffAngleX[3] = Math.abs(initAngleX[5]) + Math.abs(initAngleX[3]);
+// 4. LEG_LEFT-LOWER
+diffAngleX[4] = Math.abs(initAngleX[6]) + Math.abs(initAngleX[4]);
+// 5. LEG_RIGHT-UPPER
+diffAngleX[5] = diffAngleX[3];
+// 6. LEG_RIGHT-LOWER
+diffAngleX[6] = diffAngleX[4];
 // 7. ARM_LEFT-UPPER
 diffAngleX[7] = Math.abs(initAngleX[10]) + Math.abs(initAngleX[7]);
 // 8. ARM_LEFT-LOWER
@@ -415,10 +410,31 @@ var ObjectSizedZ    = new Array(ROBOT_ELEMENTS);
 //////////////////////////COLOUR///////////////////////////////
 var colours         = new Array(ROBOT_ELEMENTS);
 
-for(let i = 0; i < ROBOT_ELEMENTS; i++){
-  //3-element arrays storing R G B values for colours of each Object
-  colours[i] = [0.1*i, 1-(0.1*i), 1/(i+1)];
-}
+// for(let i = 0; i < ROBOT_ELEMENTS; i++){
+//   //3-element arrays storing R G B values for colours of each Object
+//   colours[i] = [0.1*i, 1-(0.1*i), 1/(i+1)];
+// }
+
+// BEIGE
+//
+//HEAD
+colours[0] = [0.98, 0.94, 0.9];
+//HAND-LEFT
+colours[9] = colours[0];
+//HAND-RIGHT
+colours[12] = colours[0];
+
+// shades of BLUE
+//
+// BLUEish
+colours[1] = [0.03, 0.3, 0.45];
+// brighter BLUE
+colours[7] = colours[10] = [0.02, 0.35, 0.55];
+// the brightest BLUE
+colours[8] = colours[11] = [0.01, 0.42, 0.65];
+//
+// BROWN
+colours[2] = colours[3] = colours[4] = colours[5] = colours[6] = [0.4, 0.26, 0.16];
 
 //
 // END create arrays for all elements of a robot
@@ -569,6 +585,10 @@ ObjectPositionX[12] = ObjectSizedX[1] + ObjectSizedX[12];
 ObjectPositionY[12] = ObjectPositionY[11] - ObjectSizedY[11] - ObjectSizedY[12];
 ObjectPositionZ[12] = 0.0;
 
+// console.log("X:", ObjectPositionX);
+// console.log("Y:", ObjectPositionY);
+// console.log("Z:", ObjectPositionZ);
+
 //
 // END SETTING POSITIONS
 ///////////////////////////////////////////
@@ -578,28 +598,19 @@ ObjectPositionZ[12] = 0.0;
 ///////////////////////////////////////////////////////////////
 
 var LightSize = 0.1;
-var Object1Sizedx = 1.0;
-var Object1Sizedy = 0.2;
-var Object1Sizedz = 0.1;
-var Object2Sizedx = 1.0;
-var Object2Sizedy = 0.2;
-var Object2Sizedz = 0.1;
-var Object3Sizedx = 0.4;
-var Object3Sizedy = 0.2;
-var Object3Sizedz = 0.1;
 
-var LightPositionX = 0;
-var LightPositionY = 0;
+var LightPositionX = 3;
+var LightPositionY = 2.3;
 var LightPositionZ = 3;
+
+var tx = 1.5;
+var ty = 0.0;
+var tz = 0.0;
 
 
 function Tick()
 { 
-  let uMMatrix0 = CreateIdentytyMatrix(); 
-  let uMMatrix1 = CreateIdentytyMatrix();
-  let uMMatrix2 = CreateIdentytyMatrix();
-  let uMMatrix3 = CreateIdentytyMatrix();
-
+  let uMMatrix0 = CreateIdentytyMatrix();
   ///////////////////////////////////////////////////////////////
   // create array of all matrices
   //
@@ -629,49 +640,46 @@ function Tick()
   // 2. ADD next joints
 
   
-  uMMatrix1 = MatrixMul(uMMatrix1,CreateScaleMatrix(Object1Sizedx,Object1Sizedy,Object1Sizedz));
-  uMMatrix1 = MatrixMul(uMMatrix1,CreateTranslationMatrix(Object1Sizedx,0.0,0.0)); 
-  uMMatrix1 = MatrixMul(uMMatrix1,CreateRotationZMatrix(Object1AngleZ));
-  uMMatrix1 = MatrixMul(uMMatrix1,CreateTranslationMatrix(Object1PositionX,Object1PositionY,Object1PositionZ));  
+  // uMMatrix1 = MatrixMul(uMMatrix1,CreateScaleMatrix(Object1Sizedx,Object1Sizedy,Object1Sizedz));
+  // uMMatrix1 = MatrixMul(uMMatrix1,CreateTranslationMatrix(Object1Sizedx,0.0,0.0)); 
+  // uMMatrix1 = MatrixMul(uMMatrix1,CreateRotationZMatrix(Object1AngleZ));
+  // uMMatrix1 = MatrixMul(uMMatrix1,CreateTranslationMatrix(Object1PositionX,Object1PositionY,Object1PositionZ));  
   
-  uMMatrix2 = MatrixMul(uMMatrix2,CreateScaleMatrix(Object2Sizedx,Object2Sizedy,Object2Sizedz));
-  uMMatrix2 = MatrixMul(uMMatrix2,CreateTranslationMatrix(Object2Sizedx,0.0,0.0)); 
-  uMMatrix2 = MatrixMul(uMMatrix2,CreateRotationZMatrix(Object2AngleZ));
-  uMMatrix2 = MatrixMul(uMMatrix2,CreateTranslationMatrix(Object2PositionX,Object2PositionY,Object2PositionZ));
+  // uMMatrix2 = MatrixMul(uMMatrix2,CreateScaleMatrix(Object2Sizedx,Object2Sizedy,Object2Sizedz));
+  // uMMatrix2 = MatrixMul(uMMatrix2,CreateTranslationMatrix(Object2Sizedx,0.0,0.0)); 
+  // uMMatrix2 = MatrixMul(uMMatrix2,CreateRotationZMatrix(Object2AngleZ));
+  // uMMatrix2 = MatrixMul(uMMatrix2,CreateTranslationMatrix(Object2PositionX,Object2PositionY,Object2PositionZ));
   
-  uMMatrix2 = MatrixMul(uMMatrix2,CreateTranslationMatrix(Object1Sizedx,0.0,0.0)); 
-  uMMatrix2 = MatrixMul(uMMatrix2,CreateRotationZMatrix(Object1AngleZ));
-  uMMatrix2 = MatrixMul(uMMatrix2,CreateTranslationMatrix(Object1PositionX,Object1PositionY,Object1PositionZ));
+  // uMMatrix2 = MatrixMul(uMMatrix2,CreateTranslationMatrix(Object1Sizedx,0.0,0.0)); 
+  // uMMatrix2 = MatrixMul(uMMatrix2,CreateRotationZMatrix(Object1AngleZ));
+  // uMMatrix2 = MatrixMul(uMMatrix2,CreateTranslationMatrix(Object1PositionX,Object1PositionY,Object1PositionZ));
   
-  uMMatrix3 = MatrixMul(uMMatrix3,CreateScaleMatrix(Object3Sizedx,Object3Sizedy,Object3Sizedz));
-  uMMatrix3 = MatrixMul(uMMatrix3,CreateTranslationMatrix(Object3Sizedx,0.0,0.0)); 
-  uMMatrix3 = MatrixMul(uMMatrix3,CreateRotationZMatrix(Object3AngleZ));
-  uMMatrix3 = MatrixMul(uMMatrix3,CreateTranslationMatrix(Object3PositionX,Object3PositionY,Object3PositionZ));
+  // uMMatrix3 = MatrixMul(uMMatrix3,CreateScaleMatrix(Object3Sizedx,Object3Sizedy,Object3Sizedz));
+  // uMMatrix3 = MatrixMul(uMMatrix3,CreateTranslationMatrix(Object3Sizedx,0.0,0.0)); 
+  // uMMatrix3 = MatrixMul(uMMatrix3,CreateRotationZMatrix(Object3AngleZ));
+  // uMMatrix3 = MatrixMul(uMMatrix3,CreateTranslationMatrix(Object3PositionX,Object3PositionY,Object3PositionZ));
   
-  uMMatrix3 = MatrixMul(uMMatrix3,CreateTranslationMatrix(Object2Sizedx,0.0,0.0)); 
-  uMMatrix3 = MatrixMul(uMMatrix3,CreateRotationZMatrix(Object2AngleZ));
-  uMMatrix3 = MatrixMul(uMMatrix3,CreateTranslationMatrix(Object2PositionX,Object2PositionY,Object2PositionZ));
+  // uMMatrix3 = MatrixMul(uMMatrix3,CreateTranslationMatrix(Object2Sizedx,0.0,0.0)); 
+  // uMMatrix3 = MatrixMul(uMMatrix3,CreateRotationZMatrix(Object2AngleZ));
+  // uMMatrix3 = MatrixMul(uMMatrix3,CreateTranslationMatrix(Object2PositionX,Object2PositionY,Object2PositionZ));
   
-  uMMatrix3 = MatrixMul(uMMatrix3,CreateTranslationMatrix(Object1Sizedx,0.0,0.0)); 
-  uMMatrix3 = MatrixMul(uMMatrix3,CreateRotationZMatrix(Object1AngleZ));
-  uMMatrix3 = MatrixMul(uMMatrix3,CreateTranslationMatrix(Object1PositionX,Object1PositionY,Object1PositionZ));
+  // uMMatrix3 = MatrixMul(uMMatrix3,CreateTranslationMatrix(Object1Sizedx,0.0,0.0)); 
+  // uMMatrix3 = MatrixMul(uMMatrix3,CreateRotationZMatrix(Object1AngleZ));
+  // uMMatrix3 = MatrixMul(uMMatrix3,CreateTranslationMatrix(Object1PositionX,Object1PositionY,Object1PositionZ));
 
   // create 13 sets of Matrices
   //
   for(let i = 0; i < ROBOT_ELEMENTS; i++){
     uMMatrix[i] = MatrixMul(uMMatrix[i], CreateScaleMatrix(ObjectSizedX[i], ObjectSizedY[i], ObjectSizedZ[i]));
-    //uMMatrix[i] = MatrixMul(uMMatrix[i], CreateTranslationMatrix(0.0,0.0,ObjectSizedZ[i])); 
+    uMMatrix[i] = MatrixMul(uMMatrix[i], CreateTranslationMatrix(0.0,0.0,ObjectSizedZ[i])); 
     uMMatrix[i] = MatrixMul(uMMatrix[i], CreateRotationXMatrix(ObjectAngleX[i]));
     uMMatrix[i] = MatrixMul(uMMatrix[i], CreateTranslationMatrix(ObjectPositionX[i], ObjectPositionY[i], ObjectPositionZ[i]));
+    uMMatrix[i] = MatrixMul(uMMatrix[i], CreateTranslationMatrix(tx, ty, tz));
   }
 
   ///////////////////////////////////////////////////////
   // creating a set of JOINTS for moving parts of a ROBOT
   //
-
-  // HEAD movement
-  uMMatrix[0] = MatrixMul(uMMatrix[0], CreateRotationYMatrix(ObjectAngleX[0]));
-
   ///////////////////////////
   // JOINTS for LEFT ARM
   //
@@ -688,7 +696,6 @@ function Tick()
   uMMatrix[9] = MatrixMul(uMMatrix[9],CreateTranslationMatrix(ObjectSizedX[7]*5, -ObjectSizedY[7] - ObjectSizedY[8]*2 - ObjectSizedY[9], 0.0)); 
   uMMatrix[9] = MatrixMul(uMMatrix[9],CreateRotationXMatrix(ObjectAngleX[7]));
   uMMatrix[9] = MatrixMul(uMMatrix[9],CreateTranslationMatrix(ObjectPositionX[9],ObjectPositionY[7],ObjectPositionZ[9]));
-
 
   ///////////////////////////
   // JOINTS for RIGHT ARM
@@ -718,8 +725,7 @@ function Tick()
   uMMatrix[6] = MatrixMul(uMMatrix[6], CreateRotationXMatrix(ObjectAngleX[5]));
   uMMatrix[6] = MatrixMul(uMMatrix[6], CreateTranslationMatrix(ObjectPositionX[6], ObjectPositionY[5], ObjectPositionZ[6]));
   
-
-
+  //LIGHT_SOURCE
   uMMatrix0 = MatrixMul(uMMatrix0,CreateScaleMatrix(LightSize,LightSize,LightSize));
   uMMatrix0 = MatrixMul(uMMatrix0,CreateTranslationMatrix(LightPositionX,LightPositionY,LightPositionZ));
   
@@ -740,9 +746,9 @@ function Tick()
   gl.uniform1f(gl.getUniformLocation(shaderProgram, "uNormalMul"),1.0);
   
   
-  gl.uniformMatrix4fv(gl.getUniformLocation(shaderProgram, "uMMatrix"), false, new Float32Array(uMMatrix1));
-  gl.uniformMatrix4fv(gl.getUniformLocation(shaderProgram, "uInvMMatrix"), false, new Float32Array(MatrixTransposeInverse(uMMatrix1)));
-  gl.uniform3f(gl.getUniformLocation(shaderProgram, "uColor"), 0.5, 0.0, 0.0);
+  gl.uniformMatrix4fv(gl.getUniformLocation(shaderProgram, "uMMatrix"), false, new Float32Array(uMMatrix[0]));
+  gl.uniformMatrix4fv(gl.getUniformLocation(shaderProgram, "uInvMMatrix"), false, new Float32Array(MatrixTransposeInverse(uMMatrix[0])));
+  gl.uniform3f(gl.getUniformLocation(shaderProgram, "uColor"), colours[0][0], colours[0][1], colours[0][2]);
   
   gl.enableVertexAttribArray(gl.getAttribLocation(shaderProgram, "aVertexPosition"));  //Przekazanie położenia
   gl.bindBuffer(gl.ARRAY_BUFFER, vertexPositionBuffer);
@@ -756,23 +762,23 @@ function Tick()
   
   gl.drawArrays(gl.TRIANGLES, 0, vertexPositionBuffer.numItems*vertexPositionBuffer.itemSize); //Faktyczne wywołanie rendrowania
   
-  //Drugi Obiekt
-  gl.uniformMatrix4fv(gl.getUniformLocation(shaderProgram, "uMMatrix"), false, new Float32Array(uMMatrix2));
-  gl.uniformMatrix4fv(gl.getUniformLocation(shaderProgram, "uInvMMatrix"), false, new Float32Array(MatrixTransposeInverse(uMMatrix2)));
-  gl.uniform3f(gl.getUniformLocation(shaderProgram, "uColor"), 0.0, 1.0, 0.0);
-  gl.drawArrays(gl.TRIANGLES, 0, vertexPositionBuffer.numItems*vertexPositionBuffer.itemSize); //Faktyczne wywołanie rendrowania
+  // //Drugi Obiekt
+  // gl.uniformMatrix4fv(gl.getUniformLocation(shaderProgram, "uMMatrix"), false, new Float32Array(uMMatrix2));
+  // gl.uniformMatrix4fv(gl.getUniformLocation(shaderProgram, "uInvMMatrix"), false, new Float32Array(MatrixTransposeInverse(uMMatrix2)));
+  // gl.uniform3f(gl.getUniformLocation(shaderProgram, "uColor"), 0.0, 1.0, 0.0);
+  // gl.drawArrays(gl.TRIANGLES, 0, vertexPositionBuffer.numItems*vertexPositionBuffer.itemSize); //Faktyczne wywołanie rendrowania
   
-  //Trzeci Obiekt
-  gl.uniformMatrix4fv(gl.getUniformLocation(shaderProgram, "uMMatrix"), false, new Float32Array(uMMatrix3));
-  gl.uniformMatrix4fv(gl.getUniformLocation(shaderProgram, "uInvMMatrix"), false, new Float32Array(MatrixTransposeInverse(uMMatrix3)));
-  gl.uniform3f(gl.getUniformLocation(shaderProgram, "uColor"), 0.0, 0.0, 1.0);
-  gl.drawArrays(gl.TRIANGLES, 0, vertexPositionBuffer.numItems*vertexPositionBuffer.itemSize); //Faktyczne wywołanie rendrowania
+  // //Trzeci Obiekt
+  // gl.uniformMatrix4fv(gl.getUniformLocation(shaderProgram, "uMMatrix"), false, new Float32Array(uMMatrix3));
+  // gl.uniformMatrix4fv(gl.getUniformLocation(shaderProgram, "uInvMMatrix"), false, new Float32Array(MatrixTransposeInverse(uMMatrix3)));
+  // gl.uniform3f(gl.getUniformLocation(shaderProgram, "uColor"), 0.0, 0.0, 1.0);
+  // gl.drawArrays(gl.TRIANGLES, 0, vertexPositionBuffer.numItems*vertexPositionBuffer.itemSize); //Faktyczne wywołanie rendrowania
   
   //////////////////////////////////////////
   // draw all of 11 Objects
   //
 
-  for(let i = 0; i < ROBOT_ELEMENTS; i++){
+  for(let i = 1; i < ROBOT_ELEMENTS; i++){
     gl.uniformMatrix4fv(gl.getUniformLocation(shaderProgram, "uMMatrix"), false, new Float32Array(uMMatrix[i]));
     gl.uniformMatrix4fv(gl.getUniformLocation(shaderProgram, "uInvMMatrix"), false, new Float32Array(MatrixTransposeInverse(uMMatrix[i])));
     gl.uniform3f(gl.getUniformLocation(shaderProgram, "uColor"), colours[i][0], colours[i][1], colours[i][2]);
@@ -809,6 +815,10 @@ function animations(){
 
   //INIT angles at the beginning of a period!!
   if(animCounter == 0){                           //start a period - SET all ANGLES to its initial states
+    ObjectAngleX[3] = initAngleX[3];
+    ObjectAngleX[4] = initAngleX[4];
+    ObjectAngleX[5] = initAngleX[5];
+    ObjectAngleX[6] = initAngleX[6];
     ObjectAngleX[7] = initAngleX[7];
     ObjectAngleX[8] = initAngleX[8];
     ObjectAngleX[9] = initAngleX[9];
@@ -823,12 +833,22 @@ function animations(){
 
   ////////////////////////////
   //SET new ANGLES
+  //
+  // for LEGS
+  ObjectAngleX[3] += (-1)*direction*(diffAngleX[3]/TICK_COUNT_HALF_PERIOD);
+  ObjectAngleX[4] += (-1)*direction*(diffAngleX[4]/TICK_COUNT_HALF_PERIOD);
+  ObjectAngleX[5] += direction*(diffAngleX[5]/TICK_COUNT_HALF_PERIOD);
+  ObjectAngleX[6] += direction*(diffAngleX[6]/TICK_COUNT_HALF_PERIOD);
+  // for ARMS
   ObjectAngleX[7] += direction*(diffAngleX[7]/TICK_COUNT_HALF_PERIOD);
   ObjectAngleX[8] += direction*(diffAngleX[8]/TICK_COUNT_HALF_PERIOD);
   ObjectAngleX[9] += direction*(diffAngleX[9]/TICK_COUNT_HALF_PERIOD);
   ObjectAngleX[10] += (-1)*direction*(diffAngleX[10]/TICK_COUNT_HALF_PERIOD);
   ObjectAngleX[11] += (-1)*direction*(diffAngleX[11]/TICK_COUNT_HALF_PERIOD);
   ObjectAngleX[12] += (-1)*direction*(diffAngleX[12]/TICK_COUNT_HALF_PERIOD);
+  //
+  angleY += (-1)*(360/(TICK_COUNT_HALF_PERIOD*4));
+  angleY = angleY%360;
   //
   ////////////////////////////
 
@@ -857,6 +877,13 @@ function handlekeydown(e)
  if(e.keyCode==75) LightPositionY=LightPositionY-0.1;
  if(e.keyCode==85) LightPositionZ=LightPositionZ+0.1;
  if(e.keyCode==79) LightPositionZ=LightPositionZ-0.1;
+
+ if(e.keyCode==100) tx -= 0.1;  //numpad 4
+ if(e.keyCode==102) tx += 0.1;  //numpad 6
+//  if(e.keyCode==104) ty += 0.1;  //numpad 8
+//  if(e.keyCode==98)  ty -= 0.1;  //numpad 2
+//  if(e.keyCode==107) tz += 0.1;  //numpad +
+//  if(e.keyCode==109) tz -= 0.1;  //numpad -
  
 //  //Z X
 //  if(e.keyCode==88) Object1AngleZ=Object1AngleZ-0.1;
@@ -906,13 +933,10 @@ function displayCurrentValues()
   document.getElementById("currLightY").innerText = LightPositionY;
   document.getElementById("currLightZ").innerText = LightPositionZ;
 
-  document.getElementById("currArmRed").innerText = Object1AngleZ;
-  document.getElementById("currArmGreen").innerText = Object2AngleZ;
-  document.getElementById("currArmBlue").innerText = Object3AngleZ;
-
   document.getElementById("currAngleX.1").innerText = ObjectAngleX[3];
   document.getElementById("currAngleX.2").innerText = ObjectAngleX[4];
   //document.getElementById("currAngleX.3").innerText = ObjectAngleX[9];
+  document.getElementById("currRotX").innerText = tx;
 }
 
 </script>
@@ -943,16 +967,10 @@ function displayCurrentValues()
       <!-- <p>HAND: <b><font color="green" id="currAngleX.3">-</font></b></p>
       <p>+Z: <b><font color="blue">B</font></b></p>
       <p>-Z: <b><font color="blue">N</font></b></p> -->
-      <p><font color="red">--------ARM MOVEMENT --------</font></p>
-      <p>RED: <b><font color="green" id="currArmRed">-</font></b></p>
-      <p>UP:   <b><font color="blue">Z</font></b></p>
-      <p>DOWN: <b><font color="blue">X</font></b></p>
-      <p>GREEN: <b><font color="green" id="currArmGreen">-</font></b></p>
-      <p>UP:   <b><font color="blue">V</font></b></p>
-      <p>DOWN: <b><font color="blue">C</font></b></p>
-      <p>BLUE: <b><font color="green" id="currArmBlue">-</font></b></p>
-      <p>UP:   <b><font color="blue">N</font></b></p>
-      <p>DOWN: <b><font color="blue">B</font></b></p>
+      <p><font color="red">---------- ROTATION X ----------</font></p>
+      <p>Rotation X: <b><font color="green" id="currRotX">-</font></b></p>
+      <p>+X: <b><font color="blue">NUM 4</font></b></p>
+      <p>-X: <b><font color="blue">NUM 6</font></b></p>
       <p>-----------------------------</p>
       <p>UP: <b><font color="blue">NUMPAD 8</font></b></p>
       <p>DOWN: <b><font color="blue">NUMPAD 2</font></b></p>
