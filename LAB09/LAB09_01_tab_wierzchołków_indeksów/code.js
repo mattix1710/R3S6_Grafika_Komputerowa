@@ -208,6 +208,26 @@ function CreateBox(x,y,z,dx,dy,dz)
 
   //Dodaj pozostałe trójkąty pudełka
 
+  ///////////////////////////////////////////////HERE - added lost lines...
+
+  // (1,2)
+  // 1. P4P8P5
+  // 2. P4P5P1
+  indexes.push(...[3, 7, 4]); //Pierwszy trójkąt
+  indexes.push(...[3, 4, 0]); //Drugi trójkąt
+  //
+  // (3,4)
+  // 3. P8P7P6
+  // 4. P8P6P5
+  indexes.push(...[7, 6, 5]);
+  indexes.push(...[7, 5, 4]);
+  //
+  // (5,6)
+  // 5. P1P5P6
+  // 6. P1P6P2
+  indexes.push(...[0, 4, 5]);
+  indexes.push(...[0, 5, 1]);
+
   return [indexes, vertexPosition, vertexNormal];
 }
 
