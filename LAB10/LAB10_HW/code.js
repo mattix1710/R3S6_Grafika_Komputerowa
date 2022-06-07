@@ -330,308 +330,6 @@ async function LoadObj(filename)
   return [indexes, vertexPosition, vertexNormal];
 }
 
-function CreateTetris()
-{
-  //Opis sceny 3D, położenie punktów w przestrzeni 3D w formacie X,Y,Z 
-  let vertexPosition = []; //Każdy punkt 3 składowe - X1,Y1,Z1
-  let vertexNormal = [];
-  let indexes = [];
-  
-  vertexPosition.push(...[0,0,0]);//Dummy nie używany wierzchołek o indeksie 0
-  vertexPosition.push(...[0.000000,2.842196,-0.946183]);
-vertexPosition.push(...[-1.000000,-1.000000,0.053817]);
-vertexPosition.push(...[-1.000000,1.000000,0.053817]);
-vertexPosition.push(...[-1.000000,-1.000000,-1.946183]);
-vertexPosition.push(...[-1.000000,1.000000,-1.946183]);
-vertexPosition.push(...[1.000000,-1.000000,0.053817]);
-vertexPosition.push(...[1.000000,1.000000,0.053817]);
-vertexPosition.push(...[1.000000,-1.000000,-1.946183]);
-vertexPosition.push(...[1.000000,1.000000,-1.946183]);
-vertexPosition.push(...[-1.000000,1.000000,-3.735654]);
-vertexPosition.push(...[-1.000000,-1.000000,-3.735654]);
-vertexPosition.push(...[1.000000,-1.000000,-3.735654]);
-vertexPosition.push(...[1.000000,1.000000,-3.735654]);
-vertexPosition.push(...[-0.876560,1.109610,-5.393824]);
-vertexPosition.push(...[-0.922474,-0.714158,-4.574212]);
-vertexPosition.push(...[0.876560,-1.109610,-5.353374]);
-vertexPosition.push(...[0.922474,0.714158,-6.172986]);
-vertexPosition.push(...[3.149849,1.000000,-1.946183]);
-vertexPosition.push(...[3.149849,-1.000000,-1.946183]);
-vertexPosition.push(...[3.149849,1.000000,-3.735654]);
-vertexPosition.push(...[3.149849,-1.000000,-3.735654]);
-vertexPosition.push(...[-0.614561,2.524491,-2.291049]);
-vertexPosition.push(...[0.614561,2.524491,-2.291049]);
-vertexPosition.push(...[-0.614561,2.524491,-3.390788]);
-vertexPosition.push(...[0.614561,2.524491,-3.390788]);
-vertexPosition.push(...[-0.614561,4.149685,-2.291049]);
-vertexPosition.push(...[0.614561,4.149685,-2.291049]);
-vertexPosition.push(...[-0.614561,4.149685,-3.390788]);
-vertexPosition.push(...[0.614561,4.149685,-3.390788]);
-vertexPosition.push(...[-0.124355,4.682039,-2.729654]);
-vertexPosition.push(...[0.124355,4.682039,-2.729654]);
-vertexPosition.push(...[-0.124355,4.682039,-2.952183]);
-vertexPosition.push(...[0.124355,4.682039,-2.952183]);
-vertexPosition.push(...[-0.614561,3.267054,-3.054775]);
-vertexPosition.push(...[0.614561,3.267054,-3.054775]);
-vertexPosition.push(...[-0.614561,4.034309,-3.054775]);
-vertexPosition.push(...[0.614561,4.034309,-3.054775]);
-vertexPosition.push(...[0.614561,3.267054,-2.613038]);
-vertexPosition.push(...[-0.614561,3.267054,-2.613038]);
-vertexPosition.push(...[0.614561,4.034309,-2.613038]);
-vertexPosition.push(...[-0.614561,4.034309,-2.613038]);
-vertexPosition.push(...[0.272955,3.267054,-2.291049]);
-vertexPosition.push(...[0.276415,3.267054,-2.613038]);
-vertexPosition.push(...[0.284771,3.267054,-3.390788]);
-vertexPosition.push(...[0.281161,3.267054,-3.054775]);
-vertexPosition.push(...[0.276415,4.034309,-2.613038]);
-vertexPosition.push(...[0.272955,4.034309,-2.291049]);
-vertexPosition.push(...[0.284771,4.034309,-3.390788]);
-vertexPosition.push(...[0.281161,4.034309,-3.054775]);
-vertexPosition.push(...[0.279868,4.034309,-2.934489]);
-vertexPosition.push(...[-0.165349,3.267054,-2.613038]);
-vertexPosition.push(...[-0.168808,3.267054,-2.291049]);
-vertexPosition.push(...[-0.160603,3.267054,-3.054775]);
-vertexPosition.push(...[-0.163608,3.267054,-2.775107]);
-vertexPosition.push(...[-0.156993,3.267054,-3.390788]);
-vertexPosition.push(...[-0.168808,4.034309,-2.291049]);
-vertexPosition.push(...[-0.165349,4.034309,-2.613038]);
-vertexPosition.push(...[-0.156993,4.034309,-3.390788]);
-vertexPosition.push(...[-0.160603,4.034309,-3.054775]);
-vertexPosition.push(...[0.109184,4.034309,-3.054775]);
-vertexPosition.push(...[0.011606,3.267054,-3.054775]);
-vertexPosition.push(...[0.028871,1.000000,-1.091329]);
-vertexPosition.push(...[0.000000,1.000000,-1.094173]);
-vertexPosition.push(...[0.056633,1.000000,-1.082908]);
-vertexPosition.push(...[0.082219,1.000000,-1.069232]);
-vertexPosition.push(...[0.104645,1.000000,-1.050827]);
-vertexPosition.push(...[0.123049,1.000000,-1.028401]);
-vertexPosition.push(...[0.136725,1.000000,-1.002816]);
-vertexPosition.push(...[0.145146,1.000000,-0.975054]);
-vertexPosition.push(...[0.147990,1.000000,-0.946183]);
-vertexPosition.push(...[0.145146,1.000000,-0.917311]);
-vertexPosition.push(...[0.136725,1.000000,-0.889549]);
-vertexPosition.push(...[0.123049,1.000000,-0.863964]);
-vertexPosition.push(...[0.104645,1.000000,-0.841538]);
-vertexPosition.push(...[0.082219,1.000000,-0.823134]);
-vertexPosition.push(...[0.056633,1.000000,-0.809458]);
-vertexPosition.push(...[0.028871,1.000000,-0.801036]);
-vertexPosition.push(...[-0.000000,1.000000,-0.798193]);
-vertexPosition.push(...[-0.028871,1.000000,-0.801036]);
-vertexPosition.push(...[-0.056633,1.000000,-0.809458]);
-vertexPosition.push(...[-0.082219,1.000000,-0.823134]);
-vertexPosition.push(...[-0.104645,1.000000,-0.841538]);
-vertexPosition.push(...[-0.123049,1.000000,-0.863964]);
-vertexPosition.push(...[-0.136725,1.000000,-0.889550]);
-vertexPosition.push(...[-0.145146,1.000000,-0.917311]);
-vertexPosition.push(...[-0.147990,1.000000,-0.946183]);
-vertexPosition.push(...[-0.145146,1.000000,-0.975054]);
-vertexPosition.push(...[-0.136725,1.000000,-1.002816]);
-vertexPosition.push(...[-0.123049,1.000000,-1.028402]);
-vertexPosition.push(...[-0.104644,1.000000,-1.050828]);
-vertexPosition.push(...[-0.082219,1.000000,-1.069232]);
-vertexPosition.push(...[-0.056633,1.000000,-1.082908]);
-vertexPosition.push(...[-0.028871,1.000000,-1.091329]);
-
-
-indexes.push(...[3,4,2]);
-indexes.push(...[9,22,5]);
-indexes.push(...[9,6,8]);
-indexes.push(...[7,2,6]);
-indexes.push(...[8,2,4]);
-indexes.push(...[13,14,10]);
-indexes.push(...[5,11,4]);
-indexes.push(...[9,20,13]);
-indexes.push(...[4,12,8]);
-indexes.push(...[15,17,16]);
-indexes.push(...[10,15,11]);
-indexes.push(...[13,16,17]);
-indexes.push(...[12,15,16]);
-indexes.push(...[19,20,18]);
-indexes.push(...[12,19,8]);
-indexes.push(...[8,18,9]);
-indexes.push(...[13,21,12]);
-indexes.push(...[13,23,9]);
-indexes.push(...[10,25,13]);
-indexes.push(...[5,24,10]);
-indexes.push(...[28,30,32]);
-indexes.push(...[31,32,30]);
-indexes.push(...[28,33,29]);
-indexes.push(...[29,31,27]);
-indexes.push(...[27,30,26]);
-indexes.push(...[35,38,23]);
-indexes.push(...[37,27,40]);
-indexes.push(...[24,22,34]);
-indexes.push(...[26,36,41]);
-indexes.push(...[46,42,47]);
-indexes.push(...[48,45,49]);
-indexes.push(...[57,52,51]);
-indexes.push(...[59,55,58]);
-indexes.push(...[55,53,61]);
-indexes.push(...[42,51,52]);
-indexes.push(...[47,57,46]);
-indexes.push(...[48,49,60]);
-indexes.push(...[22,23,52]);
-indexes.push(...[27,56,47]);
-indexes.push(...[55,44,25]);
-indexes.push(...[29,58,28]);
-indexes.push(...[34,59,36]);
-indexes.push(...[35,49,45]);
-indexes.push(...[40,43,46]);
-indexes.push(...[41,51,39]);
-indexes.push(...[38,45,43]);
-indexes.push(...[39,51,54]);
-indexes.push(...[61,53,54]);
-indexes.push(...[43,45,61]);
-indexes.push(...[36,57,41]);
-indexes.push(...[40,46,50]);
-indexes.push(...[50,60,49]);
-indexes.push(...[50,57,60]);
-indexes.push(...[62,63,1]);
-indexes.push(...[1,64,62]);
-indexes.push(...[1,65,64]);
-indexes.push(...[1,66,65]);
-indexes.push(...[1,67,66]);
-indexes.push(...[1,68,67]);
-indexes.push(...[1,69,68]);
-indexes.push(...[1,70,69]);
-indexes.push(...[70,1,71]);
-indexes.push(...[71,1,72]);
-indexes.push(...[72,1,73]);
-indexes.push(...[73,1,74]);
-indexes.push(...[1,75,74]);
-indexes.push(...[1,76,75]);
-indexes.push(...[1,77,76]);
-indexes.push(...[77,1,78]);
-indexes.push(...[78,1,79]);
-indexes.push(...[79,1,80]);
-indexes.push(...[80,1,81]);
-indexes.push(...[81,1,82]);
-indexes.push(...[83,82,1]);
-indexes.push(...[84,83,1]);
-indexes.push(...[85,84,1]);
-indexes.push(...[86,85,1]);
-indexes.push(...[1,87,86]);
-indexes.push(...[1,88,87]);
-indexes.push(...[1,89,88]);
-indexes.push(...[1,90,89]);
-indexes.push(...[91,90,1]);
-indexes.push(...[92,91,1]);
-indexes.push(...[93,92,1]);
-indexes.push(...[63,93,1]);
-indexes.push(...[5,93,63]);
-indexes.push(...[7,77,78]);
-indexes.push(...[3,5,4]);
-indexes.push(...[9,23,22]);
-indexes.push(...[9,7,6]);
-indexes.push(...[7,3,2]);
-indexes.push(...[8,6,2]);
-indexes.push(...[13,17,14]);
-indexes.push(...[5,10,11]);
-indexes.push(...[9,18,20]);
-indexes.push(...[4,11,12]);
-indexes.push(...[15,14,17]);
-indexes.push(...[10,14,15]);
-indexes.push(...[13,12,16]);
-indexes.push(...[12,11,15]);
-indexes.push(...[19,21,20]);
-indexes.push(...[12,21,19]);
-indexes.push(...[8,19,18]);
-indexes.push(...[13,20,21]);
-indexes.push(...[13,25,23]);
-indexes.push(...[10,24,25]);
-indexes.push(...[5,22,24]);
-indexes.push(...[28,26,30]);
-indexes.push(...[31,33,32]);
-indexes.push(...[28,32,33]);
-indexes.push(...[29,33,31]);
-indexes.push(...[27,31,30]);
-indexes.push(...[40,27,38]);
-indexes.push(...[27,23,38]);
-indexes.push(...[25,29,35]);
-indexes.push(...[29,37,35]);
-indexes.push(...[25,35,23]);
-indexes.push(...[37,29,27]);
-indexes.push(...[34,36,28]);
-indexes.push(...[22,26,39]);
-indexes.push(...[26,41,39]);
-indexes.push(...[34,28,24]);
-indexes.push(...[22,39,34]);
-indexes.push(...[26,28,36]);
-indexes.push(...[46,43,42]);
-indexes.push(...[48,44,45]);
-indexes.push(...[57,56,52]);
-indexes.push(...[59,53,55]);
-indexes.push(...[61,45,44]);
-indexes.push(...[44,55,61]);
-indexes.push(...[42,43,51]);
-indexes.push(...[47,56,57]);
-indexes.push(...[59,58,60]);
-indexes.push(...[58,48,60]);
-indexes.push(...[56,26,52]);
-indexes.push(...[26,22,52]);
-indexes.push(...[23,27,42]);
-indexes.push(...[27,47,42]);
-indexes.push(...[23,42,52]);
-indexes.push(...[27,26,56]);
-indexes.push(...[44,48,29]);
-indexes.push(...[24,28,55]);
-indexes.push(...[28,58,55]);
-indexes.push(...[44,29,25]);
-indexes.push(...[24,55,25]);
-indexes.push(...[29,48,58]);
-indexes.push(...[34,53,59]);
-indexes.push(...[35,37,49]);
-indexes.push(...[40,38,43]);
-indexes.push(...[41,57,51]);
-indexes.push(...[38,35,45]);
-indexes.push(...[53,34,54]);
-indexes.push(...[34,39,54]);
-indexes.push(...[61,54,43]);
-indexes.push(...[54,51,43]);
-indexes.push(...[36,59,57]);
-indexes.push(...[50,49,37]);
-indexes.push(...[37,40,50]);
-indexes.push(...[46,57,50]);
-indexes.push(...[57,59,60]);
-indexes.push(...[73,74,7]);
-indexes.push(...[3,82,83]);
-indexes.push(...[3,83,84]);
-indexes.push(...[73,7,72]);
-indexes.push(...[7,9,70]);
-indexes.push(...[72,7,71]);
-indexes.push(...[71,7,70]);
-indexes.push(...[5,3,86]);
-indexes.push(...[3,84,85]);
-indexes.push(...[3,85,86]);
-indexes.push(...[5,86,87]);
-indexes.push(...[69,70,9]);
-indexes.push(...[68,69,9]);
-indexes.push(...[5,87,88]);
-indexes.push(...[5,88,89]);
-indexes.push(...[67,68,9]);
-indexes.push(...[66,67,9]);
-indexes.push(...[5,89,90]);
-indexes.push(...[5,90,91]);
-indexes.push(...[65,66,9]);
-indexes.push(...[64,65,9]);
-indexes.push(...[9,5,63]);
-indexes.push(...[5,91,92]);
-indexes.push(...[5,92,93]);
-indexes.push(...[62,64,9]);
-indexes.push(...[63,62,9]);
-indexes.push(...[81,82,3]);
-indexes.push(...[7,74,75]);
-indexes.push(...[7,75,76]);
-indexes.push(...[81,3,80]);
-indexes.push(...[3,7,78]);
-indexes.push(...[80,3,79]);
-indexes.push(...[79,3,78]);
-indexes.push(...[7,76,77]);
- 
-  
-  return [indexes, vertexPosition, vertexNormal];
-}
-
 async function startGL() 
 {
   alert("StartGL");
@@ -705,7 +403,7 @@ async function startGL()
   //[vertexPosition, vertexColor, vertexCoords, vertexNormal] = CreateShpere(0,0,0,2, 6, 12); 
   //[indexes, vertexPosition, vertexNormal] = CreateBox(0,0,0,1,1,1);
   //[indexes, vertexPosition, vertexNormal] = CreateTetris();
-  [indexes, vertexPosition, vertexNormal] = await LoadObj('Auto3.obj');
+  [indexes, vertexPosition, vertexNormal] = await LoadObj('char.obj');
   //[indexes, vertexPosition, vertexNormal] = await LoadObj('katedra.obj');
   //[indexes, vertexPosition, vertexNormal] = await LoadObj('Tetris3.obj');
   //[indexes, vertexPosition, vertexNormal] = await LoadObj('cube.obj');
@@ -747,7 +445,7 @@ async function startGL()
 var angleZ = 0.0;
 var angleY = 0.0;
 var angleX = 0.0;
-var KameraPositionZ = -8.0;
+var KameraPositionZ = -3.0;
 
 var Object1PositionX = 0.0;
 var Object1PositionY = 0.0;
@@ -780,7 +478,7 @@ var Object3Sizedz = 0.4;
 
 var LightPositionX = 0;
 var LightPositionY = 0;
-var LightPositionZ = 3;
+var LightPositionZ = 0;
 
 
 function Tick()
@@ -856,25 +554,25 @@ function Tick()
   gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
   
   
-  gl.uniformMatrix4fv(gl.getUniformLocation(shaderProgram, "uMMatrix"), false, new Float32Array(uMMatrix1));
-  gl.uniformMatrix4fv(gl.getUniformLocation(shaderProgram, "uInvMMatrix"), false, new Float32Array(MatrixTransposeInverse(uMMatrix1)));
-  gl.uniform3f(gl.getUniformLocation(shaderProgram, "uColor"),0.5,0.0,0.0);  
-  //gl.drawArrays(gl.TRIANGLES, 0, vertexPositionBuffer.numItems*vertexPositionBuffer.itemSize); //Faktyczne wywołanie rendrowania
-  gl.drawElements(gl.TRIANGLES, indexBuffer.numItems, gl.UNSIGNED_SHORT, 0);
+  // gl.uniformMatrix4fv(gl.getUniformLocation(shaderProgram, "uMMatrix"), false, new Float32Array(uMMatrix1));
+  // gl.uniformMatrix4fv(gl.getUniformLocation(shaderProgram, "uInvMMatrix"), false, new Float32Array(MatrixTransposeInverse(uMMatrix1)));
+  // gl.uniform3f(gl.getUniformLocation(shaderProgram, "uColor"),0.5,0.0,0.0);  
+  // //gl.drawArrays(gl.TRIANGLES, 0, vertexPositionBuffer.numItems*vertexPositionBuffer.itemSize); //Faktyczne wywołanie rendrowania
+  // gl.drawElements(gl.TRIANGLES, indexBuffer.numItems, gl.UNSIGNED_SHORT, 0);
   
-  //Drugi Obiekt
-  gl.uniformMatrix4fv(gl.getUniformLocation(shaderProgram, "uMMatrix"), false, new Float32Array(uMMatrix2));
-  gl.uniformMatrix4fv(gl.getUniformLocation(shaderProgram, "uInvMMatrix"), false, new Float32Array(MatrixTransposeInverse(uMMatrix2)));
-  gl.uniform3f(gl.getUniformLocation(shaderProgram, "uColor"),0.0,1.0,0.0);
-  //gl.drawArrays(gl.TRIANGLES, 0, vertexPositionBuffer.numItems*vertexPositionBuffer.itemSize); //Faktyczne wywołanie rendrowania
-  gl.drawElements(gl.TRIANGLES, indexBuffer.numItems, gl.UNSIGNED_SHORT, 0);
+  // //Drugi Obiekt
+  // gl.uniformMatrix4fv(gl.getUniformLocation(shaderProgram, "uMMatrix"), false, new Float32Array(uMMatrix2));
+  // gl.uniformMatrix4fv(gl.getUniformLocation(shaderProgram, "uInvMMatrix"), false, new Float32Array(MatrixTransposeInverse(uMMatrix2)));
+  // gl.uniform3f(gl.getUniformLocation(shaderProgram, "uColor"),0.0,1.0,0.0);
+  // //gl.drawArrays(gl.TRIANGLES, 0, vertexPositionBuffer.numItems*vertexPositionBuffer.itemSize); //Faktyczne wywołanie rendrowania
+  // gl.drawElements(gl.TRIANGLES, indexBuffer.numItems, gl.UNSIGNED_SHORT, 0);
   
-  //Trzeci Obiekt
-  gl.uniformMatrix4fv(gl.getUniformLocation(shaderProgram, "uMMatrix"), false, new Float32Array(uMMatrix3));
-  gl.uniformMatrix4fv(gl.getUniformLocation(shaderProgram, "uInvMMatrix"), false, new Float32Array(MatrixTransposeInverse(uMMatrix3)));
-  gl.uniform3f(gl.getUniformLocation(shaderProgram, "uColor"),0.0,0.0,1.0);
-  //gl.drawArrays(gl.TRIANGLES, 0, vertexPositionBuffer.numItems*vertexPositionBuffer.itemSize); //Faktyczne wywołanie rendrowania
-  gl.drawElements(gl.TRIANGLES, indexBuffer.numItems, gl.UNSIGNED_SHORT, 0);
+  // //Trzeci Obiekt
+  // gl.uniformMatrix4fv(gl.getUniformLocation(shaderProgram, "uMMatrix"), false, new Float32Array(uMMatrix3));
+  // gl.uniformMatrix4fv(gl.getUniformLocation(shaderProgram, "uInvMMatrix"), false, new Float32Array(MatrixTransposeInverse(uMMatrix3)));
+  // gl.uniform3f(gl.getUniformLocation(shaderProgram, "uColor"),0.0,0.0,1.0);
+  // //gl.drawArrays(gl.TRIANGLES, 0, vertexPositionBuffer.numItems*vertexPositionBuffer.itemSize); //Faktyczne wywołanie rendrowania
+  // gl.drawElements(gl.TRIANGLES, indexBuffer.numItems, gl.UNSIGNED_SHORT, 0);
   
   //Obiekt Światła
   gl.uniformMatrix4fv(gl.getUniformLocation(shaderProgram, "uMMatrix"), false, new Float32Array(uMMatrix0));
